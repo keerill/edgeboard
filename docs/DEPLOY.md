@@ -146,9 +146,22 @@ curl "https://<your-domain>/api/cron/aggregate-whales?secret=$CRON_SECRET"
 curl "https://<your-domain>/api/cron/check-alerts?secret=$CRON_SECRET"
 ```
 
-**B) Free automation — GitHub Actions** (scheduled workflow hitting the endpoints;
-min interval 5 min, no Vercel upgrade needed). Ask me to add `.github/workflows/cron.yml`;
-you then add repo secrets `CRON_BASE_URL` (your prod URL) and `CRON_SECRET`.
+**B) Free automation — GitHub Actions (recommended, already wired up).**
+`.github/workflows/cron.yml` runs the scheduled workflow that hits the endpoints
+(min interval 5 min, no Vercel upgrade needed). To activate it:
+
+1. Add two **repo secrets** (Settings → Secrets and variables → Actions → New repository secret):
+   - `CRON_BASE_URL` — your prod URL with no trailing slash, e.g. `https://edgeboard.vercel.app`
+   - `CRON_SECRET` — the **same value** as `CRON_SECRET` in Vercel.
+2. Push to the **default branch** (`main`) — scheduled workflows only run from it.
+3. Optionally trigger it once manually: Actions tab → **cron (data ingestion)** → **Run workflow**
+   (this fires every endpoint in order — good for the initial seed).
+
+Schedules (GitHub's minimum is 5 min; runs may be delayed under load): sync-markets
+`*/15`, snapshot-prices `*/10`, sync-trades + check-alerts `*/5`, aggregate-whales
+hourly. Auth uses the `Authorization: Bearer <CRON_SECRET>` header. Note: GitHub
+auto-disables a repo's schedules after 60 days of inactivity — a push or a manual
+run re-arms them.
 
 **C) Free automation — external pinger** like cron-job.org pointing at each endpoint
 with header `Authorization: Bearer <CRON_SECRET>`.
