@@ -10,6 +10,11 @@ import Resend from "next-auth/providers/resend";
 const PROTECTED_PREFIXES = ["/dashboard", "/markets", "/whales", "/settings"];
 
 export const authConfig = {
+  // Set here (not only in auth.ts) so the edge middleware instance — which inits
+  // from this config alone — signs/verifies JWTs with the SAME secret. Otherwise
+  // middleware can't read the session cookie and bounces logged-in users to /signin.
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   pages: {
     signIn: "/signin",
   },
