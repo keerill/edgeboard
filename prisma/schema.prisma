@@ -90,3 +90,39 @@ model Subscription {
 
   @@map("subscriptions")
 }
+
+// ---------- Market ingestion (Phase 2) ----------
+// Cache of Polymarket markets (from Gamma /markets) + a YES-price time series.
+// Money/price fields are Decimal (Postgres numeric), never float — see §6.
+
+model Market {
+  id             String    @id @default(cuid())
+  conditionId    String    @unique @map("condition_id")
+  slug           String?
+  question       String
+  category       String?
+  clobTokenIdYes String?   @map("clob_token_id_yes")
+  clobTokenIdNo  String?   @map("clob_token_id_no")
+  volume         Decimal?  @default(0) @db.Decimal(20, 6)
+  liquidity      Decimal?  @default(0) @db.Decimal(20, 6)
+  closed         Boolean   @default(false)
+  endDate        DateTime? @map("end_date")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  priceSnapshots PriceSnapshot[]
+
+  @@map("markets")
+}
+
+model PriceSnapshot {
+  id       String   @id @default(cuid())
+  marketId String   @map("market_id")
+  tokenId  String   @map("token_id")
+  price    Decimal  @db.Decimal(12, 6)
+  ts       DateTime @default(now())
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId, ts])
+  @@map("price_snapshots")
+}
