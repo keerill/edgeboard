@@ -9,10 +9,14 @@
 }
 
 .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   color: var(--muted);
+  transition: color 0.12s ease;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--accent);
   }
 }
 
@@ -24,10 +28,14 @@
 
 .category {
   align-self: flex-start;
+  padding: 0.15rem 0.5rem;
   font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border-radius: 999px;
 }
 
 .title {
@@ -35,28 +43,35 @@
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
 .stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 0.75rem;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 0.2rem;
+  min-width: 7rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .statLabel {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  color: var(--subtle);
 }
 
 .statValue {
+  font-family: var(--font-mono);
   font-size: 1.25rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

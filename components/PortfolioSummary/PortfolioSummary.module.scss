@@ -5,34 +5,49 @@
   gap: 0.75rem;
 }
 
-.card {
+.card,
+.cardPos,
+.cardNeg {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.875rem 1rem;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.cardPos {
+  background: var(--success-subtle);
+  border-color: transparent;
+}
+
+.cardNeg {
+  background: var(--danger-subtle);
+  border-color: transparent;
 }
 
 .label {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  color: var(--subtle);
 }
 
 .value,
 .pos,
 .neg {
+  font-family: var(--font-mono);
   font-size: 1.375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .pos {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .neg {
-  color: #dc2626;
+  color: var(--danger);
 }

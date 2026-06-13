@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageTransition } from "@/components/motion/PageTransition";
+import { ThemeToggle } from "@/components/Theme/ThemeToggle";
 import styles from "./marketing.module.scss";
 
 export default function MarketingLayout({
@@ -10,12 +12,14 @@ export default function MarketingLayout({
       <header className={styles.header}>
         <nav className={styles.nav}>
           <Link href="/" className={styles.brand}>
+            <span className={styles.brandMark} aria-hidden />
             EdgeBoard
           </Link>
           <div className={styles.navRight}>
             <Link href="/whale-watch" className={styles.navLink}>
               Whale watch
             </Link>
+            <ThemeToggle />
             <Link href="/signin" className={styles.signInBtn}>
               Sign in
             </Link>
@@ -23,7 +27,9 @@ export default function MarketingLayout({
         </nav>
       </header>
 
-      <main className={styles.main}>{children}</main>
+      <main className={styles.main}>
+        <PageTransition>{children}</PageTransition>
+      </main>
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>

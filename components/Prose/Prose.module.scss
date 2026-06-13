@@ -8,6 +8,7 @@
     margin: 0;
     font-size: 1.875rem;
     font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   h2 {
@@ -31,8 +32,13 @@
   }
 
   a {
-    color: var(--foreground);
+    color: var(--accent);
     text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: var(--accent-hover);
+    }
   }
 
   small {

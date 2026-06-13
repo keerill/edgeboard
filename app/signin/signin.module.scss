@@ -12,13 +12,26 @@
 .header {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.5rem;
   text-align: center;
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.25rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.brandMark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: 0 0 0 1px var(--accent-border);
 }
 
 .subtitle {
@@ -27,16 +40,31 @@
   color: var(--muted);
 }
 
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
 .googleBtn {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: none;
-  padding: 0.625rem 1rem;
+  background: var(--bg);
+  padding: 0.7rem 1rem;
   font-weight: 500;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
     background: var(--surface-hover);
+    border-color: var(--border-strong);
   }
 }
 
@@ -64,19 +92,33 @@
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: transparent;
-  padding: 0.625rem 1rem;
+  background: var(--bg);
+  padding: 0.7rem 1rem;
   color: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
 }
 
 .submitBtn {
   width: 100%;
   border: none;
   border-radius: var(--radius);
-  background: var(--foreground);
-  color: var(--background);
-  padding: 0.625rem 1rem;
-  font-weight: 500;
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--accent-hover);
+  }
 }
 
 .disclaimer {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { ThemeSelect } from "@/components/Theme/ThemeSelect";
 import { prisma } from "@/lib/db/prisma";
 import { formatCompactUsd, shortenAddress } from "@/lib/format";
 import { PLAN_LIMITS, type Plan } from "@/lib/plan";
@@ -328,6 +329,14 @@ export default async function SettingsPage({
       </header>
 
       <Banner status={status} error={error} />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Appearance</h2>
+        <div className={styles.appearanceRow}>
+          <p className={styles.note}>Choose how EdgeBoard looks.</p>
+          <ThemeSelect />
+        </div>
+      </section>
 
       <section className={styles.planCard}>
         <div className={styles.planRow}>

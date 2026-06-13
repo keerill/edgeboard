@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import { PriceChart } from "@/components/PriceChart/PriceChart";
 import type { WhalePoint } from "@/components/PriceChart/PriceChart";
@@ -70,7 +71,8 @@ export default async function MarketDetailPage({
     <section className={styles.page}>
       <div className={styles.breadcrumb}>
         <Link href="/markets" className={styles.back}>
-          ← Markets
+          <ArrowLeft size={14} />
+          Markets
         </Link>
       </div>
 

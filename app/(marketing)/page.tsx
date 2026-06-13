@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { ArrowRight, Bell, LineChart, Waves, Wallet } from "lucide-react";
 
+import { MotionList } from "@/components/motion/MotionList";
 import { PLAN_LIMITS } from "@/lib/plan";
 import styles from "./page.module.scss";
 
@@ -9,19 +11,23 @@ const FEATURES = [
   {
     title: "Whale moves",
     body: "See what large wallets are buying and selling across every market.",
+    Icon: Waves,
   },
   {
     title: "Price history with big trades",
     body: "Market price charts with whale trades marked right on the timeline.",
+    Icon: LineChart,
   },
   {
     title: "Portfolio P&L",
     body: "Track any public wallet's positions, P&L and win rate in one view.",
+    Icon: Wallet,
   },
   {
     title: "Alerts",
     body: "Get notified when whales move or prices swing.",
     soon: true,
+    Icon: Bell,
   },
 ];
 
@@ -58,8 +64,14 @@ export default function LandingPage() {
   return (
     <div className={styles.wrapper}>
       <section className={styles.hero}>
+        <span className={styles.eyebrow}>
+          Smart money analytics for Polymarket
+        </span>
         <h1 className={styles.title}>
-          See what smart money is doing — and your whole P&amp;L in one place.
+          See what smart money is doing —{" "}
+          <span className={styles.titleAccent}>
+            and your whole P&amp;L in one place.
+          </span>
         </h1>
         <p className={styles.subtitle}>
           Analytics for Polymarket prediction-market traders: whale moves, price
@@ -67,7 +79,7 @@ export default function LandingPage() {
         </p>
         <div className={styles.heroCtas}>
           <Link href="/signin" className={styles.ctaPrimary}>
-            Sign up
+            Sign up <ArrowRight size={16} />
           </Link>
           <Link href="/whale-watch" className={styles.ctaSecondary}>
             See live whale moves
@@ -75,9 +87,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className={styles.features}>
+      <MotionList className={styles.features}>
         {FEATURES.map((f) => (
           <div key={f.title} className={styles.feature}>
+            <span className={styles.featureIcon}>
+              <f.Icon size={18} />
+            </span>
             <h2 className={styles.featureTitle}>
               {f.title}
               {f.soon ? <span className={styles.badge}>Soon</span> : null}
@@ -85,7 +100,7 @@ export default function LandingPage() {
             <p className={styles.featureBody}>{f.body}</p>
           </div>
         ))}
-      </section>
+      </MotionList>
 
       <section className={styles.pricing}>
         <h2 className={styles.sectionTitle}>Pricing</h2>
@@ -95,6 +110,9 @@ export default function LandingPage() {
               key={plan.name}
               className={plan.featured ? styles.planFeatured : styles.plan}
             >
+              {plan.featured ? (
+                <span className={styles.popular}>Most popular</span>
+              ) : null}
               <div className={styles.planHead}>
                 <span className={styles.planName}>{plan.name}</span>
                 <span className={styles.planPrice}>
@@ -109,7 +127,10 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signin" className={styles.planCta}>
+              <Link
+                href="/signin"
+                className={plan.featured ? styles.planCta : styles.planCtaAlt}
+              >
                 {plan.featured ? "Start Pro" : "Sign up free"}
               </Link>
             </div>
@@ -120,7 +141,7 @@ export default function LandingPage() {
       <section className={styles.finalCta}>
         <h2 className={styles.finalCtaTitle}>Start tracking smart money today.</h2>
         <Link href="/signin" className={styles.ctaPrimary}>
-          Sign up
+          Sign up <ArrowRight size={16} />
         </Link>
       </section>
     </div>

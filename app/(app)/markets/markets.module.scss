@@ -23,22 +23,53 @@
   gap: 0.5rem;
 }
 
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.65rem;
+  color: var(--subtle);
+  pointer-events: none;
+}
+
 .searchInput {
   width: 16rem;
   max-width: 60vw;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem 0.5rem 2.1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--background);
+  background: var(--surface);
   color: var(--foreground);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
 }
 
 .searchBtn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface-hover);
+  background: var(--surface-2);
   color: var(--foreground);
+  font-weight: 500;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
 }
 
 .controls {
@@ -64,20 +95,31 @@
 
 .chip,
 .chipActive {
-  padding: 0.25rem 0.625rem;
+  padding: 0.3rem 0.7rem;
   font-size: 0.8125rem;
+  font-weight: 500;
   border: 1px solid var(--border);
   border-radius: 999px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
-.chip:hover {
-  background: var(--surface-hover);
+.chip {
+  color: var(--muted);
+
+  &:hover {
+    color: var(--foreground);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
 }
 
 .chipActive {
-  background: var(--foreground);
-  color: var(--background);
-  border-color: var(--foreground);
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
 }
 
 .grid {
@@ -90,7 +132,7 @@
   color: var(--muted);
 
   code {
-    font-family: ui-monospace, monospace;
+    font-family: var(--font-mono);
     font-size: 0.875em;
   }
 }

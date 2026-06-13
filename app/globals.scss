@@ -1,21 +1,79 @@
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --muted: #525252;
-  --border: rgba(0, 0, 0, 0.1);
-  --surface-hover: rgba(0, 0, 0, 0.05);
+  /* layout / radius */
   --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
   --max-width: 64rem;
+
+  /* typography (wired by next/font in app/layout.tsx) */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* ===== DARK is the default surface (Nansen-style) ===== */
+  --bg: #0b0b0f;
+  --surface: #131318;
+  --surface-2: #1a1a21;
+  --elevated: #1e1e26;
+  --surface-hover: rgba(255, 255, 255, 0.06);
+
+  --foreground: #ededf0;
+  --muted: #a1a1aa;
+  --subtle: #6b6b76;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* brand accent — royal violet */
+  --accent: #8b5cf6;
+  --accent-hover: #a78bfa;
+  --accent-fg: #ffffff;
+  --accent-subtle: rgba(139, 92, 246, 0.16);
+  --accent-border: rgba(139, 92, 246, 0.4);
+
+  /* semantic status — green/red reserved strictly for buy/sell */
+  --success: #22c55e;
+  --success-subtle: rgba(34, 197, 94, 0.16);
+  --danger: #f87171;
+  --danger-subtle: rgba(248, 113, 113, 0.16);
+  --warning: #fbbf24;
+  --info: #22d3ee;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* back-compat alias: many modules still use var(--background) */
+  --background: var(--bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a3a3a3;
-    --border: rgba(255, 255, 255, 0.1);
-    --surface-hover: rgba(255, 255, 255, 0.05);
-  }
+[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #fafafa;
+  --surface-2: #f4f4f5;
+  --elevated: #ffffff;
+  --surface-hover: rgba(0, 0, 0, 0.04);
+
+  --foreground: #0a0a0a;
+  --muted: #52525b;
+  --subtle: #8a8a93;
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.16);
+
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-fg: #ffffff;
+  --accent-subtle: rgba(124, 58, 237, 0.1);
+  --accent-border: rgba(124, 58, 237, 0.35);
+
+  --success: #16a34a;
+  --success-subtle: rgba(22, 163, 74, 0.12);
+  --danger: #dc2626;
+  --danger-subtle: rgba(220, 38, 38, 0.12);
+  --warning: #d97706;
+  --info: #0891b2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 *,
@@ -32,9 +90,9 @@ body {
 
 body {
   min-height: 100vh;
-  background: var(--background);
+  background: var(--bg);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -47,4 +105,16 @@ a {
 button {
   font: inherit;
   cursor: pointer;
+}
+
+/* Accessibility: respect reduced-motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

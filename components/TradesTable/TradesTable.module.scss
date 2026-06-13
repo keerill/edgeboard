@@ -1,7 +1,8 @@
 .wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .table {
@@ -11,21 +12,29 @@
 
   th,
   td {
-    padding: 0.625rem 0.875rem;
+    padding: 0.7rem 0.875rem;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
   }
 
   th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--muted);
+    color: var(--subtle);
+    background: var(--surface-2);
   }
 
   tbody tr:last-child td {
     border-bottom: none;
+  }
+
+  tbody tr {
+    transition: background 0.12s ease;
   }
 
   tbody tr:hover {
@@ -39,49 +48,79 @@
 
 .right {
   text-align: right;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .wallet {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
+  color: var(--foreground);
+  transition: color 0.12s ease;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--accent);
   }
 }
 
-.market,
-.marketText {
+.market {
   display: inline-block;
   max-width: 22rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   vertical-align: bottom;
 }
 
-.market:hover {
-  text-decoration: underline;
-}
-
-.buy,
-.sell {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.buy {
-  color: #16a34a;
-}
-
-.sell {
-  color: #dc2626;
+a.market:hover {
+  color: var(--accent);
 }
 
 .outcome {
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--muted);
+}
+
+/* buy/sell pills */
+.buy,
+.sell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+}
+
+.buy {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+
+.sell {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.pos,
+.neg {
+  font-weight: 600;
+}
+
+.pos {
+  color: var(--success);
+}
+
+.neg {
+  color: var(--danger);
+}
+
+.pct {
+  margin-left: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .empty {

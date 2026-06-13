@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 import { MarketCard } from "@/components/MarketCard/MarketCard";
+import { MotionList } from "@/components/motion/MotionList";
 import { prisma } from "@/lib/db/prisma";
 import styles from "./markets.module.scss";
 
@@ -68,14 +70,17 @@ export default async function MarketsPage({
           {sort !== "volume" ? (
             <input type="hidden" name="sort" value={sort} />
           ) : null}
-          <input
-            className={styles.searchInput}
-            type="search"
-            name="q"
-            placeholder="Search markets…"
-            defaultValue={q ?? ""}
-            aria-label="Search markets"
-          />
+          <div className={styles.searchWrap}>
+            <Search size={16} className={styles.searchIcon} />
+            <input
+              className={styles.searchInput}
+              type="search"
+              name="q"
+              placeholder="Search markets…"
+              defaultValue={q ?? ""}
+              aria-label="Search markets"
+            />
+          </div>
           <button className={styles.searchBtn} type="submit">
             Search
           </button>
@@ -126,7 +131,10 @@ export default async function MarketsPage({
           data from Polymarket.
         </p>
       ) : (
-        <div className={styles.grid}>
+        <MotionList
+          key={`${q ?? ""}-${category ?? ""}-${sort}`}
+          className={styles.grid}
+        >
           {markets.map((m) => (
             <MarketCard
               key={m.id}
@@ -138,7 +146,7 @@ export default async function MarketsPage({
               liquidity={m.liquidity}
             />
           ))}
-        </div>
+        </MotionList>
       )}
     </section>
   );

@@ -1,3 +1,4 @@
+import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { formatCompactUsd, formatPercent } from "@/lib/format";
 import styles from "./PortfolioSummary.module.scss";
 
@@ -18,6 +19,12 @@ function pnlClass(value: number | null): string {
   return value > 0 ? styles.pos : styles.neg;
 }
 
+/** Sign → tile background tint. */
+function tileClass(value: number | null): string {
+  if (value === null || value === 0) return styles.card;
+  return value > 0 ? styles.cardPos : styles.cardNeg;
+}
+
 /** Top-of-dashboard summary cards (spec §8: value, P&L cash + %, win rate, count). */
 export function PortfolioSummary({
   totalValue,
@@ -30,18 +37,24 @@ export function PortfolioSummary({
     <dl className={styles.grid}>
       <div className={styles.card}>
         <dt className={styles.label}>Total value</dt>
-        <dd className={styles.value}>{formatCompactUsd(totalValue)}</dd>
-      </div>
-      <div className={styles.card}>
-        <dt className={styles.label}>Cash P&amp;L</dt>
-        <dd className={pnlClass(totalCashPnl)}>
-          {formatCompactUsd(totalCashPnl)}
+        <dd className={styles.value}>
+          <AnimatedNumber value={totalValue} format={formatCompactUsd} />
         </dd>
       </div>
-      <div className={styles.card}>
+      <div className={tileClass(totalCashPnl)}>
+        <dt className={styles.label}>Cash P&amp;L</dt>
+        <dd className={pnlClass(totalCashPnl)}>
+          <AnimatedNumber value={totalCashPnl} format={formatCompactUsd} />
+        </dd>
+      </div>
+      <div className={tileClass(totalPercentPnl)}>
         <dt className={styles.label}>P&amp;L %</dt>
         <dd className={pnlClass(totalPercentPnl)}>
-          {formatPercent(totalPercentPnl)}
+          {totalPercentPnl === null ? (
+            formatPercent(totalPercentPnl)
+          ) : (
+            <AnimatedNumber value={totalPercentPnl} format={formatPercent} />
+          )}
         </dd>
       </div>
       <div className={styles.card}>
@@ -50,7 +63,12 @@ export function PortfolioSummary({
       </div>
       <div className={styles.card}>
         <dt className={styles.label}>Open positions</dt>
-        <dd className={styles.value}>{openPositions}</dd>
+        <dd className={styles.value}>
+          <AnimatedNumber
+            value={openPositions}
+            format={(n) => String(Math.round(n))}
+          />
+        </dd>
       </div>
     </dl>
   );

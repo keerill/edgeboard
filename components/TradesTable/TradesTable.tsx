@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 import {
   formatCompactUsd,
@@ -74,6 +75,11 @@ export function TradesTable({
                 <span
                   className={t.side === "sell" ? styles.sell : styles.buy}
                 >
+                  {t.side === "sell" ? (
+                    <ArrowDownRight size={12} />
+                  ) : (
+                    <ArrowUpRight size={12} />
+                  )}
                   {t.side === "sell" ? "SELL" : "BUY"}
                 </span>
                 {t.outcome ? (

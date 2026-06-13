@@ -7,7 +7,12 @@ $max-width: 72rem;
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
 }
 
 .nav {
@@ -27,18 +32,20 @@ $max-width: 72rem;
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.navLinks {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.875rem;
-}
-
-.navLink:hover {
-  text-decoration: underline;
+.brandMark {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: 0 0 0 1px var(--accent-border);
 }
 
 .navRight {
@@ -53,13 +60,34 @@ $max-width: 72rem;
 }
 
 .signOutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.7rem;
+  color: var(--muted);
+  font-weight: 500;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--foreground);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+}
+
+@media (max-width: 560px) {
+  .userEmail {
+    display: none;
+  }
+
+  .signOutBtn span {
+    display: none;
   }
 }
 
