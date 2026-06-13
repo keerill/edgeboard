@@ -1,0 +1,24 @@
+# Local Postgres for development. Not used in production (use Neon/Supabase on Vercel).
+# Start:  docker compose up -d
+# Reset:  docker compose down -v
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: edgeboard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: edgeboard
+      POSTGRES_PASSWORD: edgeboard
+      POSTGRES_DB: edgeboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - edgeboard_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edgeboard -d edgeboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  edgeboard_pgdata:
