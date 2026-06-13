@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import Resend from "next-auth/providers/resend";
 
 import { prisma } from "@/lib/db/prisma";
 import { authConfig } from "./auth.config";
@@ -9,6 +10,15 @@ import { authConfig } from "./auth.config";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
+  // Resend (email magic link) needs the adapter, so it's added here — NOT in the
+  // edge authConfig, which the adapter-less middleware loads.
+  providers: [
+    ...authConfig.providers,
+    Resend({
+      apiKey: process.env.RESEND_API_KEY,
+      from: process.env.EMAIL_FROM,
+    }),
+  ],
   // JWT sessions keep middleware edge-safe (no DB read needed to check auth).
   // The adapter is still used to persist users/accounts and email verification
   // tokens (required by the magic-link provider).

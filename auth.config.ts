@@ -1,10 +1,13 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
 
 // Edge-safe Auth.js config. NO database adapter / Prisma here — this object is
 // imported by middleware.ts, which runs on the edge runtime where Prisma can't run.
 // The full config (auth.ts) spreads this and adds the Prisma adapter.
+//
+// Only edge-safe providers belong here. The Resend (email magic-link) provider
+// REQUIRES an adapter, so it lives in auth.ts (Node) — putting it here makes the
+// adapter-less middleware throw MissingAdapter and bounce every request to /signin.
 
 // Route prefixes that require an authenticated session.
 const PROTECTED_PREFIXES = ["/dashboard", "/markets", "/whales", "/settings"];
@@ -18,14 +21,11 @@ export const authConfig = {
   pages: {
     signIn: "/signin",
   },
+  // Google (OAuth) is edge-safe (no adapter needed). Resend is added in auth.ts.
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-    Resend({
-      apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM,
     }),
   ],
   callbacks: {
