@@ -16,8 +16,10 @@ export interface PlanLimits {
   whaleFeedLimit: number;
   /** Whether the "Top whales by volume" ranking is shown. */
   whaleRanking: boolean;
-  /** Whether alerts are available (wired up in Phase 7). */
+  /** Whether alerts are available at all (Phase 7). */
   alerts: boolean;
+  /** Max alerts a user may save (0 = feature unavailable). */
+  alertsLimit: number;
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
@@ -27,6 +29,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     whaleFeedLimit: 15,
     whaleRanking: false,
     alerts: false,
+    alertsLimit: 0,
   },
   pro: {
     trackedWallets: Number.POSITIVE_INFINITY,
@@ -34,6 +37,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     whaleFeedLimit: 50,
     whaleRanking: true,
     alerts: true,
+    alertsLimit: 20,
   },
 };
 
@@ -45,6 +49,15 @@ export function isPro(plan: Plan): boolean {
 /** Whether a user on `plan` may add another wallet given how many they have. */
 export function canAddWallet(plan: Plan, currentCount: number): boolean {
   return currentCount < PLAN_LIMITS[plan].trackedWallets;
+}
+
+/**
+ * Whether a user on `plan` may create another alert given how many they have.
+ * Free's limit is 0, so this also doubles as the "alerts available?" gate (§10).
+ */
+export function canAddAlert(plan: Plan, currentCount: number): boolean {
+  const { alerts, alertsLimit } = PLAN_LIMITS[plan];
+  return alerts && currentCount < alertsLimit;
 }
 
 /**

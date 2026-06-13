@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { canAddWallet, historyCutoff, isPro, PLAN_LIMITS } from "./plan";
+import {
+  canAddAlert,
+  canAddWallet,
+  historyCutoff,
+  isPro,
+  PLAN_LIMITS,
+} from "./plan";
 
 describe("isPro", () => {
   it("is true only for the pro plan", () => {
@@ -20,6 +26,19 @@ describe("canAddWallet", () => {
     expect(canAddWallet("pro", 0)).toBe(true);
     expect(canAddWallet("pro", 1)).toBe(true);
     expect(canAddWallet("pro", 999)).toBe(true);
+  });
+});
+
+describe("canAddAlert", () => {
+  it("never lets a free user create an alert (Pro-only feature)", () => {
+    expect(canAddAlert("free", 0)).toBe(false);
+    expect(canAddAlert("free", 5)).toBe(false);
+  });
+
+  it("lets a pro user create alerts up to the plan limit", () => {
+    expect(canAddAlert("pro", 0)).toBe(true);
+    expect(canAddAlert("pro", PLAN_LIMITS.pro.alertsLimit - 1)).toBe(true);
+    expect(canAddAlert("pro", PLAN_LIMITS.pro.alertsLimit)).toBe(false);
   });
 });
 

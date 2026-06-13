@@ -14,17 +14,19 @@ generator client {
 // ---------- Auth.js standard models ----------
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  telegramChatId String?   @map("telegram_chat_id") // optional Telegram delivery target (Phase 7)
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   accounts       Account[]
   sessions       Session[]
   subscription   Subscription?
   trackedWallets TrackedWallet[]
+  alerts         Alert[]
 
   @@map("users")
 }
@@ -112,6 +114,7 @@ model Market {
 
   priceSnapshots PriceSnapshot[]
   trades         Trade[]
+  alerts         Alert[]
 
   @@map("markets")
 }
@@ -182,4 +185,41 @@ model TrackedWallet {
   @@unique([userId, address]) // no duplicate wallet per user
   @@index([userId])
   @@map("tracked_wallets")
+}
+
+// ---------- Alerts (Phase 7 / v1.1) ----------
+// User-defined notifications delivered by email/Telegram (spec §6, §8). A Pro-only
+// feature (§10). The spec lists a single polymorphic `target`; we split it into typed
+// columns (marketId FK + wallet + threshold) for integrity and strict-friendly queries.
+// `lastFiredAt` is a per-alert watermark for de-dup/cooldown (see jobs/check-alerts.ts).
+
+enum AlertType {
+  whale_move // a new whale trade matches the scope (market/wallet/min-USDC)
+  price_swing // scoped market's YES price moves >= threshold percentage-points
+  market // scoped market closes/resolves
+}
+
+enum AlertChannel {
+  email
+  telegram
+}
+
+model Alert {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  type        AlertType
+  channel     AlertChannel @default(email)
+  marketId    String?      @map("market_id") // required for price_swing/market; optional for whale_move
+  wallet      String? // optional whale_move scope, stored lowercased
+  threshold   Decimal?     @db.Decimal(20, 6) // whale_move: min USDC; price_swing: percentage-points
+  active      Boolean      @default(true)
+  lastFiredAt DateTime?    @map("last_fired_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market Market? @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([active])
+  @@map("alerts")
 }
