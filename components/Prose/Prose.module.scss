@@ -10,8 +10,33 @@
     font-weight: 700;
   }
 
+  h2 {
+    margin: 1rem 0 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
   p {
     margin: 0;
+    color: var(--muted);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    color: var(--muted);
+  }
+
+  a {
+    color: var(--foreground);
+    text-decoration: underline;
+  }
+
+  small {
+    font-size: 0.8125rem;
     color: var(--muted);
   }
 

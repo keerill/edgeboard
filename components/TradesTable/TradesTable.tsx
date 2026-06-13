@@ -24,14 +24,20 @@ export interface TradeRow {
 
 export interface TradesTableProps {
   trades: TradeRow[];
-  /** Render a Market column linking to each trade's market. */
+  /** Render a Market column showing each trade's market. */
   showMarket?: boolean;
+  /**
+   * Link the Market column to the (auth-gated) `/markets/[id]` page. Defaults to
+   * true; set false on public pages to render the market as plain text instead.
+   */
+  linkMarkets?: boolean;
   emptyMessage?: string;
 }
 
 export function TradesTable({
   trades,
   showMarket = false,
+  linkMarkets = true,
   emptyMessage = "No trades yet.",
 }: TradesTableProps) {
   if (trades.length === 0) {
@@ -77,9 +83,18 @@ export function TradesTable({
               {showMarket ? (
                 <td className={styles.left}>
                   {t.market ? (
-                    <Link className={styles.market} href={`/markets/${t.market.id}`}>
-                      {t.market.question}
-                    </Link>
+                    linkMarkets ? (
+                      <Link
+                        className={styles.market}
+                        href={`/markets/${t.market.id}`}
+                      >
+                        {t.market.question}
+                      </Link>
+                    ) : (
+                      <span className={styles.marketText}>
+                        {t.market.question}
+                      </span>
+                    )
                   ) : (
                     "—"
                   )}

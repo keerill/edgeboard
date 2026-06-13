@@ -13,8 +13,8 @@ export default function MarketingLayout({
             EdgeBoard
           </Link>
           <div className={styles.navRight}>
-            <Link href="/markets" className={styles.navLink}>
-              Markets
+            <Link href="/whale-watch" className={styles.navLink}>
+              Whale watch
             </Link>
             <Link href="/signin" className={styles.signInBtn}>
               Sign in

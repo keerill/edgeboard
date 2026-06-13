@@ -50,16 +50,17 @@
   }
 }
 
-.market {
+.market,
+.marketText {
   display: inline-block;
   max-width: 22rem;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: bottom;
+}
 
-  &:hover {
-    text-decoration: underline;
-  }
+.market:hover {
+  text-decoration: underline;
 }
 
 .buy,
