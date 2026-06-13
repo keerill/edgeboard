@@ -110,6 +110,7 @@ model Market {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   priceSnapshots PriceSnapshot[]
+  trades         Trade[]
 
   @@map("markets")
 }
@@ -125,4 +126,41 @@ model PriceSnapshot {
 
   @@index([marketId, ts])
   @@map("price_snapshots")
+}
+
+// ---------- Trades & whales (Phase 3) ----------
+// Large ("whale") trades ingested from the Data API + per-wallet aggregates.
+// Money/price fields are Decimal (Postgres numeric), never float — see §6.
+
+model Trade {
+  id        String   @id @default(cuid())
+  marketId  String   @map("market_id")
+  wallet    String // proxyWallet, lowercased
+  side      String // "buy" | "sell"
+  sizeUsdc  Decimal  @map("size_usdc") @db.Decimal(20, 6)
+  price     Decimal  @db.Decimal(12, 6)
+  isWhale   Boolean  @map("is_whale")
+  ts        DateTime
+  asset     String?  @map("asset_token_id") // outcome token id (FIFO P&L grouping)
+  outcome   String? // outcome label, e.g. "Yes" / "No" (display)
+  txHash    String?  @map("tx_hash") // on-chain tx, for block-explorer linking
+  dedupeKey String   @unique @map("dedupe_key") // idempotent upsert key (§7)
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([ts])
+  @@index([wallet])
+  @@index([marketId, ts])
+  @@map("trades")
+}
+
+model WhaleWallet {
+  address         String    @id
+  totalVolumeUsdc Decimal   @default(0) @map("total_volume_usdc") @db.Decimal(20, 6)
+  realizedPnl     Decimal?  @map("realized_pnl") @db.Decimal(20, 6)
+  winRate         Decimal?  @map("win_rate") @db.Decimal(5, 4)
+  lastActive      DateTime? @map("last_active")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("whale_wallets")
 }

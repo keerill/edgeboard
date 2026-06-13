@@ -7,7 +7,7 @@
 |------|----------|--------|
 | 1 | Скелет | готово |
 | 2 | Ingestion рынков и цен | готово |
-| 3 | Сделки и киты | не начато |
+| 3 | Сделки и киты | готово |
 | 4 | Портфель | не начато |
 | 5 | Монетизация | не начато |
 | 6 | Полировка и запуск | не начато |
@@ -57,9 +57,30 @@ Next.js (App Router) + TS `strict` + SCSS Modules, Prisma + Postgres, Auth.js v5
 - `/markets` под авторизацией: войти и открыть страницу (проверить живые карточки). Для наполнения БД дёрнуть оба cron-эндпоинта.
 - На Vercel: расписания крона из `vercel.json` подхватятся автоматически; Vercel сам шлёт `Authorization: Bearer $CRON_SECRET`. Под-суточные расписания требуют платного плана.
 
-## Фаза 3 — Сделки и киты — `не начато`
-Cron `sync-trades` + `aggregate-whales`; страница `/markets/[id]` с графиком и маркерами; страница `/whales`.
-DoD: лента китов и график с крупными сделками работают на реальных данных.
+## Фаза 3 — Сделки и киты — `готово`
+Cron `sync-trades` + `aggregate-whales`; таблицы `trades`, `whale_wallets`; страница `/markets/[id]` (график + маркеры китов + лента крупных сделок); страница `/whales` (лента + рейтинг).
+
+Сделано:
+- Prisma-модели `trades` и `whale_wallets` (§6); денежные/ценовые поля — `Decimal`. У `trades` добавлены `asset` (outcome-токен, для FIFO P&L) и `outcome` (ярлык для UI), а также `dedupe_key` (`@unique`) для идемпотентного upsert (§7). Миграции `add_trades_whale_wallets` + `add_trade_asset_outcome` применены.
+- Клиент Data API (`lib/polymarket/data.ts`): `getWhaleTrades(conditionId, minUsdc)` — `GET /trades?market=…&filterType=CASH&filterAmount=…&takerOnly=true` (фильтр по USDC-номиналу на стороне API). Реюз обёртки `fetchJson` (retry/backoff/TTL-кеш). Тип `DataTrade` — loose, как `GammaMarket`. Контракт сверен с docs.polymarket.com.
+- `lib/analytics/` — чистые тестируемые функции (§0.5): `isWhale` (определение кита, граница `>=`), `aggregateByWallet` (объём + last-active), `computePnl` (FIFO realized P&L + win-rate per `asset`). Тесты на Vitest: `whales.test.ts`, `pnl.test.ts` (11 кейсов).
+- `jobs/sync-trades.ts` — топ-50 рынков по объёму, конкурентность 4; `sizeUsdc = usdcSize ?? size*price` (на живых данных `usdcSize` отсутствует → используется `size*price`); `createMany({skipDuplicates})` по `dedupe_key`. `jobs/aggregate-whales.ts` — пересчёт `whale_wallets` из китовых сделок.
+- Роуты `/api/cron/sync-trades` и `/api/cron/aggregate-whales` (та же защита `CRON_SECRET`, `dynamic`/`maxDuration`). В `vercel.json` добавлены расписания (3 мин / час).
+- UI: `/markets/[id]` — серверный компонент (график `PriceChart` на Recharts: линия YES из `price_snapshots` + маркеры китов `ReferenceDot` по сторонам buy/sell; таблица последних крупных сделок). `/whales` — лента топ-сделок (24ч/7д, фильтр по категории) + рейтинг китов по объёму. Компоненты `PriceChart` (client), `TradesTable` (server). Форматтеры `shortenAddress`, `formatRelativeTime`, `formatPercent` + знак у `formatCompactUsd`.
+
+Решение по P&L/win-rate (для прозрачности): считаются FIFO только по **ингестированным китовым сделкам**, поэтому это оценка снизу (мелкие закрывающие сделки кошелька не тянем). Рейтинг `/whales` поэтому сортируется по объёму (надёжная метрика), а P&L/win-rate помечены как «Est.» с дисклеймером. Продвинутый скоринг китов отложен (§15).
+
+Проверено локально (DoD):
+- Миграции применяются: `prisma migrate dev` → таблицы `trades`, `whale_wallets`. ✅
+- `npm run typecheck` (strict), `npm run lint`, `npm run build`, `npm test` (11/11) проходят. ✅
+- Контракт Data API сверен на живых данных: для топ-рынков возвращаются китовые сделки нужной формы (`proxyWallet`/`side`/`asset`/`size`/`price`/`timestamp`/`outcome`/`transactionHash`); `usdcSize` отсутствует → `size*price`. ✅
+- Авторизация cron: без секрета → `401`; с `Authorization: Bearer` → `200`. ✅
+- `sync-trades` → `{ok:true, created:137, skipped:0}`; `aggregate-whales` → `{ok:true, wallets:74}`; 137 distinct `dedupe_key` == 137 строк (без дублей, идемпотентно). ✅ (живые данные Polymarket)
+
+Ожидает действий пользователя:
+- Заполнить `CRON_SECRET` в `.env` (как и в Фазе 2), чтобы дёргать новые cron локально/на Vercel. `DATA_API_BASE` и `WHALE_THRESHOLD_USDC` уже есть в `.env.example` (новых переменных Фаза 3 не вводит).
+- Визуальная проверка под авторизацией: войти, открыть `/whales` (лента + рейтинг, переключатель 24ч/7д) и `/markets/[id]` (график с маркерами китов + таблица крупных сделок). Для наполнения БД дёрнуть `sync-trades`, затем `aggregate-whales`.
+- На Vercel под-суточные расписания (`sync-trades` */3) требуют платного плана.
 
 ## Фаза 4 — Портфель — `не начато`
 Data API `/positions` (+ `/value`); `/dashboard` с P&L, винрейтом, позициями; `tracked_wallets`.

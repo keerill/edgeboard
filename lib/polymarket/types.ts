@@ -29,6 +29,31 @@ export interface ClobMidpoint {
 }
 
 /**
+ * Data API GET /trades item (spec §5.3). Fields are intentionally loose: the
+ * live payload varies and the USDC unit of `size` is undocumented, so consumers
+ * prefer `usdcSize` when present and fall back to `size * price`.
+ */
+export interface DataTrade {
+  proxyWallet?: string;
+  /** "BUY" | "SELL" (we lowercase on ingest). */
+  side?: string;
+  /** Outcome token id. */
+  asset?: string;
+  conditionId?: string;
+  /** Trade quantity (shares); USDC notional ≈ size * price. */
+  size?: string | number;
+  /** Execution price, 0..1. */
+  price?: string | number;
+  /** USDC notional when the API provides it directly. */
+  usdcSize?: string | number;
+  /** Unix seconds. */
+  timestamp?: string | number;
+  transactionHash?: string;
+  outcome?: string;
+  outcomeIndex?: number;
+}
+
+/**
  * Gamma returns some array fields as JSON-encoded strings (e.g.
  * '["123","456"]') and sometimes as real arrays. Normalize both to string[].
  */

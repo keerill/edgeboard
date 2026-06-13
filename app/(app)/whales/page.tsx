@@ -1,9 +1,192 @@
-import { Placeholder } from "@/components/Placeholder/Placeholder";
+import Link from "next/link";
 
-export default function WhalesPage() {
+import { TradesTable } from "@/components/TradesTable/TradesTable";
+import type { TradeRow } from "@/components/TradesTable/TradesTable";
+import { prisma } from "@/lib/db/prisma";
+import {
+  formatCompactUsd,
+  formatPercent,
+  formatRelativeTime,
+  shortenAddress,
+} from "@/lib/format";
+import styles from "./whales.module.scss";
+
+// Always render fresh from the DB (data is updated by the ingestion crons).
+export const dynamic = "force-dynamic";
+
+const FEED_LIMIT = 50;
+const RANKING_LIMIT = 20;
+const PERIODS = { "24h": "24h", "7d": "7d" } as const;
+type Period = keyof typeof PERIODS;
+const PERIOD_MS: Record<Period, number> = {
+  "24h": 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+};
+
+function buildHref(params: { period?: Period; category?: string }): string {
+  const qs = new URLSearchParams();
+  if (params.period && params.period !== "24h") qs.set("period", params.period);
+  if (params.category) qs.set("category", params.category);
+  const s = qs.toString();
+  return s ? `/whales?${s}` : "/whales";
+}
+
+export default async function WhalesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const period: Period = sp.period === "7d" ? "7d" : "24h";
+  const category = typeof sp.category === "string" ? sp.category : undefined;
+  const cutoff = new Date(Date.now() - PERIOD_MS[period]);
+
+  const [feed, ranking, categoryRows] = await Promise.all([
+    prisma.trade.findMany({
+      where: {
+        isWhale: true,
+        ts: { gte: cutoff },
+        ...(category ? { market: { category } } : {}),
+      },
+      orderBy: { sizeUsdc: "desc" },
+      take: FEED_LIMIT,
+      select: {
+        id: true,
+        wallet: true,
+        side: true,
+        sizeUsdc: true,
+        price: true,
+        outcome: true,
+        ts: true,
+        market: { select: { id: true, question: true } },
+      },
+    }),
+    prisma.whaleWallet.findMany({
+      orderBy: { totalVolumeUsdc: "desc" },
+      take: RANKING_LIMIT,
+    }),
+    prisma.market.findMany({
+      where: { closed: false, category: { not: null } },
+      select: { category: true },
+      distinct: ["category"],
+      orderBy: { category: "asc" },
+    }),
+  ]);
+
+  const trades: TradeRow[] = feed.map((t) => ({
+    id: t.id,
+    wallet: t.wallet,
+    side: t.side,
+    sizeUsdc: t.sizeUsdc,
+    price: t.price,
+    outcome: t.outcome,
+    ts: t.ts,
+    market: t.market,
+  }));
+
+  const categories = categoryRows
+    .map((r) => r.category)
+    .filter((c): c is string => Boolean(c));
+
   return (
-    <Placeholder title="Whales">
-      The whale-moves feed and rankings arrive in Phase 3.
-    </Placeholder>
+    <section className={styles.page}>
+      <header className={styles.head}>
+        <h1 className={styles.title}>Whale moves</h1>
+        <p className={styles.subtitle}>
+          The largest taker trades across tracked markets. Information only, not
+          financial advice.
+        </p>
+      </header>
+
+      <div className={styles.controls}>
+        <div className={styles.group}>
+          <span className={styles.controlLabel}>Period</span>
+          {(Object.keys(PERIODS) as Period[]).map((key) => (
+            <Link
+              key={key}
+              href={buildHref({ period: key, category })}
+              className={key === period ? styles.chipActive : styles.chip}
+            >
+              {key === "24h" ? "24h" : "7d"}
+            </Link>
+          ))}
+        </div>
+
+        {categories.length > 0 ? (
+          <div className={styles.group}>
+            <span className={styles.controlLabel}>Category</span>
+            <Link
+              href={buildHref({ period })}
+              className={!category ? styles.chipActive : styles.chip}
+            >
+              All
+            </Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat}
+                href={buildHref({ period, category: cat })}
+                className={cat === category ? styles.chipActive : styles.chip}
+              >
+                {cat}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Top trades</h2>
+        <TradesTable
+          trades={trades}
+          showMarket
+          emptyMessage="No whale trades in this window — run the sync-trades cron to ingest large trades from Polymarket."
+        />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Top whales by volume</h2>
+        {ranking.length === 0 ? (
+          <p className={styles.empty}>
+            No whale wallets yet — run the aggregate-whales cron.
+          </p>
+        ) : (
+          <ol className={styles.ranking}>
+            {ranking.map((w, i) => (
+              <li key={w.address} className={styles.rankRow}>
+                <span className={styles.rank}>{i + 1}</span>
+                <a
+                  className={styles.rankWallet}
+                  href={`https://polymarket.com/profile/${w.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {shortenAddress(w.address)}
+                </a>
+                <span className={styles.rankStat}>
+                  <span className={styles.rankLabel}>Volume</span>
+                  {formatCompactUsd(w.totalVolumeUsdc)}
+                </span>
+                <span className={styles.rankStat}>
+                  <span className={styles.rankLabel}>Est. P&L</span>
+                  {formatCompactUsd(w.realizedPnl)}
+                </span>
+                <span className={styles.rankStat}>
+                  <span className={styles.rankLabel}>Win rate</span>
+                  {formatPercent(w.winRate)}
+                </span>
+                <span className={styles.rankStat}>
+                  <span className={styles.rankLabel}>Active</span>
+                  {w.lastActive ? formatRelativeTime(w.lastActive) : "—"}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+        <p className={styles.note}>
+          Est. P&amp;L and win rate are FIFO estimates from ingested whale trades,
+          not a full ledger.
+        </p>
+      </section>
+    </section>
   );
 }
