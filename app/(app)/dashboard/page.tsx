@@ -9,7 +9,9 @@ import {
 import { summarizePortfolio } from "@/lib/analytics/portfolio";
 import { prisma } from "@/lib/db/prisma";
 import { shortenAddress } from "@/lib/format";
+import { canAddWallet } from "@/lib/plan";
 import { getPortfolioValue, getPositions } from "@/lib/polymarket";
+import { getUserSubscription } from "@/lib/subscription";
 import { addTrackedWallet, removeTrackedWallet } from "./actions";
 import styles from "./dashboard.module.scss";
 
@@ -55,6 +57,22 @@ function AddWalletForm({ invalid }: { invalid: boolean }) {
   );
 }
 
+// Shown to Free users who already track their one allowed wallet (§10).
+function WalletLimitNotice({ atLimitError }: { atLimitError: boolean }) {
+  return (
+    <div className={styles.upsell}>
+      <p className={styles.upsellText}>
+        {atLimitError
+          ? "Free tracks a single wallet. Upgrade to Pro to track more."
+          : "On Free you can track one wallet. Upgrade to Pro for unlimited wallets."}
+      </p>
+      <Link href="/settings" className={styles.upsellLink}>
+        Upgrade to Pro
+      </Link>
+    </div>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -67,10 +85,16 @@ export default async function DashboardPage({
   if (!userId) return null;
 
   const invalid = sp.error === "invalid-address";
-  const wallets = await prisma.trackedWallet.findMany({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-  });
+  const limitError = sp.error === "wallet-limit";
+  const [wallets, sub] = await Promise.all([
+    prisma.trackedWallet.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+    }),
+    getUserSubscription(userId),
+  ]);
+  const plan = sub?.plan === "pro" ? "pro" : "free";
+  const canAdd = canAddWallet(plan, wallets.length);
 
   const header = (
     <header className={styles.head}>
@@ -205,7 +229,11 @@ export default async function DashboardPage({
         </p>
       </section>
 
-      <AddWalletForm invalid={invalid} />
+      {canAdd ? (
+        <AddWalletForm invalid={invalid} />
+      ) : (
+        <WalletLimitNotice atLimitError={limitError} />
+      )}
     </section>
   );
 }

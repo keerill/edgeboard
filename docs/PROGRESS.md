@@ -9,7 +9,7 @@
 | 2 | Ingestion рынков и цен | готово |
 | 3 | Сделки и киты | готово |
 | 4 | Портфель | готово |
-| 5 | Монетизация | не начато |
+| 5 | Монетизация | готово |
 | 6 | Полировка и запуск | не начато |
 | 7 (v1.1) | Оповещения | не начато |
 
@@ -106,9 +106,24 @@ Data API `/positions` (+ `/value`); таблица `tracked_wallets`; стран
 - Визуальная проверка под авторизацией: войти → `/dashboard` → добавить публичный адрес (например, кошелёк из рейтинга `/whales`) → увидеть сводку и таблицу позиций; переключить/удалить кошелёк.
 - Гейтинг Free/Pro по числу кошельков (Free=1) сознательно отложен на Фазу 5 (монетизация) — сейчас можно добавлять несколько кошельков. График стоимости портфеля во времени (§8, опционально «если есть данные») отложен: нет источника таймсерии портфеля (отдельный cron вне рамок Фазы 4).
 
-## Фаза 5 — Монетизация — `не начато`
-Stripe Checkout + Billing Portal + webhook; гейтинг Free/Pro.
-DoD: подписка оформляется и отменяется; Pro-фичи открываются только платящим.
+## Фаза 5 — Монетизация — `готово`
+Stripe Checkout + Billing Portal + webhook; гейтинг Free/Pro по плану из `Subscription.plan`.
+
+Сделано:
+- Зависимость `stripe` (v22, API `2026-05-27.dahlia`); ленивый синглтон `lib/stripe/client.ts` (`getStripe()`, читает `STRIPE_SECRET_KEY`, бросает если не задан; `apiVersion` не пинуем — берём из SDK). Миграция БД не нужна — модель `Subscription` (§6) уже содержит все поля (`stripeCustomerId`, `stripeSubscriptionId`, `plan`, `status`, `currentPeriodEnd`).
+- `lib/plan.ts` — чистая, тестируемая логика лимитов (§10): `PLAN_LIMITS` (free/pro: `trackedWallets`, `historyDays`, `whaleFeedLimit`, `whaleRanking`, `alerts`), `isPro`, `canAddWallet`, `historyCutoff`. Тесты на Vitest: `lib/plan.test.ts` (6 кейсов) → всего 27/27. `lib/subscription.ts` — IO-хелперы (`getUserSubscription`, `getCurrentPlan` — fail-closed в `free`).
+- Серверные actions (`app/(app)/settings/actions.ts`, `"use server"`): `createCheckoutSession` (reuse/создание Stripe customer с `metadata.userId`, hosted Checkout `mode=subscription`, `client_reference_id`+`subscription_data.metadata`, redirect на `session.url`); `createBillingPortalSession` (Billing Portal по `stripeCustomerId`). Base URL из заголовка `host` (fallback `NEXTAUTH_URL`) — новых env нет. Используем серверный redirect на хостед-страницы Stripe, без client-side Stripe.js (поэтому `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` в MVP не используется).
+- Вебхук `/api/stripe/webhook` (`runtime=nodejs`, `force-dynamic`): сырое тело + `stripe.webhooks.constructEvent` (невалидная подпись → `400`). Обрабатывает `checkout.session.completed` (retrieve подписки → `plan=pro`), `customer.subscription.updated|deleted` (статус → план: `active|trialing|past_due`=pro, иначе free). Идемпотентно: `updateMany` по `metadata.userId` с fallback на `stripeCustomerId`; `current_period_end` берём из `subscription.items.data[0]` (в текущем API его нет на верхнем уровне).
+- Гейтинг Free/Pro (§10): **кошельки** — `addTrackedWallet` блокирует 2-й кошелёк на Free (`canAddWallet`), на дашборде вместо формы — апселл; повторное добавление уже отслеживаемого адреса просто выбирает его (без проверки лимита). **История цены** `/markets/[id]` — на Free фильтр `ts >= now-7d` + примечание с апселлом, Pro — полная история. **Лента китов** `/whales` — `take = whaleFeedLimit` (Free 15 / Pro 50), рейтинг «Top whales» скрыт на Free и заменён апселлом. **Settings** показывает текущий план, статус, дату продления/окончания, лимиты (исп. кошельков), и кнопку Upgrade (Checkout) / Manage (Portal); баннер по `?status=success|cancel`.
+
+Проверено локально (DoD — статика, без секретов):
+- `npm run typecheck` (strict), `npm run lint`, `npm run build`, `npm test` (27/27) проходят. ✅
+- Build: `/api/stripe/webhook`, `/settings`, `/dashboard`, `/markets/[id]`, `/whales` — динамические (ƒ). ✅
+
+Ожидает действий пользователя (e2e-проверка DoD требует тестовых ключей Stripe):
+- Заполнить в `.env.local`: `STRIPE_SECRET_KEY` (`sk_test_…`), `STRIPE_PRICE_ID_PRO` (`price_…` рекуррентной цены ~€15/мес — создать в Stripe), `STRIPE_WEBHOOK_SECRET` (`whsec_…` из `stripe listen --forward-to localhost:3000/api/stripe/webhook`). `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — опционально (в MVP не используется). Убедиться, что задан `NEXTAUTH_URL`.
+- Прогон: войти → `/settings` (Free) → **Upgrade to Pro** → тестовая карта `4242 4242 4242 4242` → возврат с баннером → вебхук `checkout.session.completed` → план **Pro**. Проверить разблокировку: 2-й кошелёк на `/dashboard`, полная история на `/markets/[id]`, длинная лента + рейтинг на `/whales`. Затем **Manage subscription** → Billing Portal → отмена → `customer.subscription.deleted` → план **Free**, Pro-фичи снова закрыты. ✅ DoD.
+- На Vercel: добавить endpoint вебхука в Stripe Dashboard, его signing secret → `STRIPE_WEBHOOK_SECRET` в env проекта.
 
 ## Фаза 6 — Полировка и запуск — `не начато`
 Лендинг, Terms/Privacy, дисклеймер, Sentry, аналитика, публичный мини-дашборд «whale moves» как контент.

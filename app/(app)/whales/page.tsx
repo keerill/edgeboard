@@ -9,12 +9,13 @@ import {
   formatRelativeTime,
   shortenAddress,
 } from "@/lib/format";
+import { PLAN_LIMITS } from "@/lib/plan";
+import { getCurrentPlan } from "@/lib/subscription";
 import styles from "./whales.module.scss";
 
 // Always render fresh from the DB (data is updated by the ingestion crons).
 export const dynamic = "force-dynamic";
 
-const FEED_LIMIT = 50;
 const RANKING_LIMIT = 20;
 const PERIODS = { "24h": "24h", "7d": "7d" } as const;
 type Period = keyof typeof PERIODS;
@@ -41,6 +42,10 @@ export default async function WhalesPage({
   const category = typeof sp.category === "string" ? sp.category : undefined;
   const cutoff = new Date(Date.now() - PERIOD_MS[period]);
 
+  // Free sees a shorter feed and no whale ranking; Pro gets the full set (§10).
+  const plan = await getCurrentPlan();
+  const limits = PLAN_LIMITS[plan];
+
   const [feed, ranking, categoryRows] = await Promise.all([
     prisma.trade.findMany({
       where: {
@@ -49,7 +54,7 @@ export default async function WhalesPage({
         ...(category ? { market: { category } } : {}),
       },
       orderBy: { sizeUsdc: "desc" },
-      take: FEED_LIMIT,
+      take: limits.whaleFeedLimit,
       select: {
         id: true,
         wallet: true,
@@ -141,11 +146,30 @@ export default async function WhalesPage({
           showMarket
           emptyMessage="No whale trades in this window — run the sync-trades cron to ingest large trades from Polymarket."
         />
+        {!limits.whaleRanking ? (
+          <p className={styles.note}>
+            Free shows the top {limits.whaleFeedLimit} trades.{" "}
+            <Link href="/settings" className={styles.upsellLink}>
+              Upgrade to Pro
+            </Link>{" "}
+            for the full feed.
+          </p>
+        ) : null}
       </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Top whales by volume</h2>
-        {ranking.length === 0 ? (
+        {!limits.whaleRanking ? (
+          <div className={styles.upsell}>
+            <p className={styles.upsellText}>
+              The whale leaderboard — ranked by volume, estimated P&amp;L and win
+              rate — is a Pro feature.
+            </p>
+            <Link href="/settings" className={styles.upsellLink}>
+              Upgrade to Pro
+            </Link>
+          </div>
+        ) : ranking.length === 0 ? (
           <p className={styles.empty}>
             No whale wallets yet — run the aggregate-whales cron.
           </p>
@@ -182,10 +206,12 @@ export default async function WhalesPage({
             ))}
           </ol>
         )}
-        <p className={styles.note}>
-          Est. P&amp;L and win rate are FIFO estimates from ingested whale trades,
-          not a full ledger.
-        </p>
+        {limits.whaleRanking ? (
+          <p className={styles.note}>
+            Est. P&amp;L and win rate are FIFO estimates from ingested whale
+            trades, not a full ledger.
+          </p>
+        ) : null}
       </section>
     </section>
   );

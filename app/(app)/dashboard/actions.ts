@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { isValidWalletAddress } from "@/lib/analytics/portfolio";
 import { prisma } from "@/lib/db/prisma";
+import { canAddWallet } from "@/lib/plan";
+import { getUserSubscription } from "@/lib/subscription";
 
 const LABEL_MAX = 80;
 
@@ -28,6 +30,22 @@ export async function addTrackedWallet(formData: FormData): Promise<void> {
 
   if (!isValidWalletAddress(address)) {
     redirect("/dashboard?error=invalid-address");
+  }
+
+  // Already tracking this address? Just select it — no limit check, no insert.
+  const existing = await prisma.trackedWallet.findUnique({
+    where: { userId_address: { userId, address } },
+  });
+  if (existing) {
+    redirect(`/dashboard?wallet=${address}`);
+  }
+
+  // Enforce the Free plan's single-wallet limit (§10). Pro is unlimited.
+  const sub = await getUserSubscription(userId);
+  const plan = sub?.plan === "pro" ? "pro" : "free";
+  const count = await prisma.trackedWallet.count({ where: { userId } });
+  if (!canAddWallet(plan, count)) {
+    redirect("/dashboard?error=wallet-limit");
   }
 
   try {

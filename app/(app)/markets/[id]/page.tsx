@@ -6,6 +6,8 @@ import type { WhalePoint } from "@/components/PriceChart/PriceChart";
 import { TradesTable } from "@/components/TradesTable/TradesTable";
 import { prisma } from "@/lib/db/prisma";
 import { formatCompactUsd, formatYesPrice } from "@/lib/format";
+import { historyCutoff, PLAN_LIMITS } from "@/lib/plan";
+import { getCurrentPlan } from "@/lib/subscription";
 import styles from "./market.module.scss";
 
 // Always render fresh from the DB (data is updated by the ingestion crons).
@@ -21,12 +23,18 @@ export default async function MarketDetailPage({
 }) {
   const { id } = await params;
 
-  const market = await prisma.market.findUnique({ where: { id } });
+  const [market, plan] = await Promise.all([
+    prisma.market.findUnique({ where: { id } }),
+    getCurrentPlan(),
+  ]);
   if (!market) notFound();
+
+  // Free plans see only the last 7 days of price history; Pro sees it all (§10).
+  const cutoff = historyCutoff(plan);
 
   const [snapshotsDesc, trades] = await Promise.all([
     prisma.priceSnapshot.findMany({
-      where: { marketId: id },
+      where: { marketId: id, ...(cutoff ? { ts: { gte: cutoff } } : {}) },
       orderBy: { ts: "desc" },
       take: SNAPSHOT_LIMIT,
       select: { ts: true, price: true },
@@ -92,6 +100,16 @@ export default async function MarketDetailPage({
       </header>
 
       <PriceChart points={points} whales={whales} />
+
+      {cutoff ? (
+        <p className={styles.historyNote}>
+          Showing the last {PLAN_LIMITS.free.historyDays} days of price history.{" "}
+          <Link href="/settings" className={styles.historyLink}>
+            Upgrade to Pro
+          </Link>{" "}
+          for the full history.
+        </p>
+      ) : null}
 
       <section className={styles.tradesSection}>
         <h2 className={styles.sectionTitle}>Recent large trades</h2>
