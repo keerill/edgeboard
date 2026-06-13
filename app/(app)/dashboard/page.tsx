@@ -1,9 +1,211 @@
-import { Placeholder } from "@/components/Placeholder/Placeholder";
+import Link from "next/link";
 
-export default function DashboardPage() {
+import { auth } from "@/auth";
+import { PortfolioSummary } from "@/components/PortfolioSummary/PortfolioSummary";
+import {
+  PositionsTable,
+  type PositionRow,
+} from "@/components/PositionsTable/PositionsTable";
+import { summarizePortfolio } from "@/lib/analytics/portfolio";
+import { prisma } from "@/lib/db/prisma";
+import { shortenAddress } from "@/lib/format";
+import { getPortfolioValue, getPositions } from "@/lib/polymarket";
+import { addTrackedWallet, removeTrackedWallet } from "./actions";
+import styles from "./dashboard.module.scss";
+
+// Portfolio is per-user and reads the live Data API — never cache.
+export const dynamic = "force-dynamic";
+
+/** Coerce a loose Data API value to a finite number (0 on garbage). */
+function num(value: unknown): number {
+  const n = Number(String(value));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function AddWalletForm({ invalid }: { invalid: boolean }) {
   return (
-    <Placeholder title="Dashboard">
-      Portfolio P&amp;L and positions arrive in Phase 4.
-    </Placeholder>
+    <form className={styles.addForm} action={addTrackedWallet}>
+      <input
+        className={styles.input}
+        type="text"
+        name="address"
+        placeholder="0x… public wallet address"
+        autoComplete="off"
+        spellCheck={false}
+        required
+        aria-label="Wallet address"
+      />
+      <input
+        className={styles.inputLabel}
+        type="text"
+        name="label"
+        placeholder="Label (optional)"
+        autoComplete="off"
+        aria-label="Wallet label"
+      />
+      <button className={styles.addBtn} type="submit">
+        Add wallet
+      </button>
+      {invalid ? (
+        <p className={styles.error}>
+          Enter a valid address: 0x followed by 40 hex characters.
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const session = await auth();
+  const userId = session?.user?.id;
+  // The (app) layout already gates this route; this satisfies the type checker.
+  if (!userId) return null;
+
+  const invalid = sp.error === "invalid-address";
+  const wallets = await prisma.trackedWallet.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const header = (
+    <header className={styles.head}>
+      <h1 className={styles.title}>Portfolio</h1>
+      <p className={styles.subtitle}>
+        Track any public Polymarket wallet&apos;s positions and P&amp;L.
+        Read-only — information only, not financial advice.
+      </p>
+    </header>
+  );
+
+  // Empty state: prompt to add the first wallet.
+  if (wallets.length === 0) {
+    return (
+      <section className={styles.page}>
+        {header}
+        <p className={styles.empty}>
+          Add a public wallet address to see its portfolio.
+        </p>
+        <AddWalletForm invalid={invalid} />
+      </section>
+    );
+  }
+
+  // Selected wallet: ?wallet= if it belongs to the user, else the first one.
+  const requested =
+    typeof sp.wallet === "string" ? sp.wallet.toLowerCase() : undefined;
+  const selected =
+    wallets.find((w) => w.address === requested) ?? wallets[0];
+
+  const [positions, value] = await Promise.all([
+    getPositions(selected.address),
+    getPortfolioValue(selected.address),
+  ]);
+
+  const summary = summarizePortfolio(
+    positions.map((p) => ({
+      initialValue: num(p.initialValue),
+      currentValue: num(p.currentValue),
+      cashPnl: num(p.cashPnl),
+    })),
+  );
+  // /value is the authoritative total when present; otherwise sum positions.
+  const totalValue = value ?? summary.totalValue;
+
+  // Link positions to our cached market pages where we have them.
+  const conditionIds = positions
+    .map((p) => p.conditionId)
+    .filter((c): c is string => Boolean(c));
+  const cachedMarkets = conditionIds.length
+    ? await prisma.market.findMany({
+        where: { conditionId: { in: conditionIds } },
+        select: { id: true, conditionId: true },
+      })
+    : [];
+  const marketByCondition = new Map(
+    cachedMarkets.map((m) => [m.conditionId, m.id]),
+  );
+
+  const rows: PositionRow[] = positions.map((p, i) => {
+    const initialValue = num(p.initialValue);
+    const cashPnl = num(p.cashPnl);
+    const marketId = p.conditionId
+      ? marketByCondition.get(p.conditionId)
+      : undefined;
+    return {
+      key: p.asset ?? `${i}`,
+      title: p.title ?? "Unknown market",
+      outcome: p.outcome ?? null,
+      size: p.size ?? null,
+      avgPrice: p.avgPrice ?? null,
+      curPrice: p.curPrice ?? null,
+      cashPnl,
+      pnlFraction: initialValue > 0 ? cashPnl / initialValue : null,
+      marketHref: marketId ? `/markets/${marketId}` : null,
+    };
+  });
+
+  return (
+    <section className={styles.page}>
+      {header}
+
+      <div className={styles.walletBar}>
+        <div className={styles.chips}>
+          {wallets.map((w) => (
+            <Link
+              key={w.id}
+              href={`/dashboard?wallet=${w.address}`}
+              className={w.id === selected.id ? styles.chipActive : styles.chip}
+            >
+              {w.label ?? shortenAddress(w.address)}
+            </Link>
+          ))}
+        </div>
+        <form action={removeTrackedWallet}>
+          <input type="hidden" name="id" value={selected.id} />
+          <button type="submit" className={styles.removeBtn}>
+            Remove
+          </button>
+        </form>
+      </div>
+
+      <p className={styles.viewing}>
+        Viewing{" "}
+        <a
+          className={styles.address}
+          href={`https://polymarket.com/profile/${selected.address}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {shortenAddress(selected.address)}
+        </a>
+      </p>
+
+      <PortfolioSummary
+        totalValue={totalValue}
+        totalCashPnl={summary.totalCashPnl}
+        totalPercentPnl={summary.totalPercentPnl}
+        winRate={summary.winRate}
+        openPositions={summary.openPositions}
+      />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Positions</h2>
+        <PositionsTable
+          positions={rows}
+          emptyMessage="No open positions for this address (or the Data API is unavailable right now)."
+        />
+        <p className={styles.note}>
+          Value and P&amp;L are sourced from the Polymarket Data API. Win rate is
+          the share of positions currently in profit.
+        </p>
+      </section>
+
+      <AddWalletForm invalid={invalid} />
+    </section>
   );
 }

@@ -54,6 +54,50 @@ export interface DataTrade {
 }
 
 /**
+ * Data API GET /positions item (spec §5.3). One row per outcome the wallet
+ * holds, with Polymarket's authoritative cost basis and P&L. Fields are loose
+ * (live payload varies); numbers may arrive as strings. Note: `percentPnl` is
+ * in PERCENT units (e.g. 6.12 = 6.12%), not a 0..1 fraction.
+ */
+export interface DataPosition {
+  proxyWallet?: string;
+  /** Outcome token id. */
+  asset?: string;
+  conditionId?: string;
+  /** Market question / title. */
+  title?: string;
+  slug?: string;
+  /** Outcome label, e.g. "Yes" / "No" / team name. */
+  outcome?: string;
+  outcomeIndex?: number;
+  /** Shares held. */
+  size?: string | number;
+  /** Average entry price, 0..1. */
+  avgPrice?: string | number;
+  /** Current price, 0..1. */
+  curPrice?: string | number;
+  /** Cost basis in USDC. */
+  initialValue?: string | number;
+  /** Current value in USDC. */
+  currentValue?: string | number;
+  /** Unrealized + realized P&L in USDC. */
+  cashPnl?: string | number;
+  /** P&L as a percentage (e.g. 6.12 = 6.12%). */
+  percentPnl?: string | number;
+  realizedPnl?: string | number;
+  /** Market resolved and the position can be redeemed. */
+  redeemable?: boolean;
+  endDate?: string;
+}
+
+/** Data API GET /value item (spec §5.3): total portfolio value for a wallet. */
+export interface DataValue {
+  user?: string;
+  /** Total portfolio value in USDC. */
+  value?: string | number;
+}
+
+/**
  * Gamma returns some array fields as JSON-encoded strings (e.g.
  * '["123","456"]') and sometimes as real arrays. Normalize both to string[].
  */

@@ -8,7 +8,7 @@
 | 1 | Скелет | готово |
 | 2 | Ingestion рынков и цен | готово |
 | 3 | Сделки и киты | готово |
-| 4 | Портфель | не начато |
+| 4 | Портфель | готово |
 | 5 | Монетизация | не начато |
 | 6 | Полировка и запуск | не начато |
 | 7 (v1.1) | Оповещения | не начато |
@@ -82,9 +82,29 @@ Cron `sync-trades` + `aggregate-whales`; таблицы `trades`, `whale_wallets
 - Визуальная проверка под авторизацией: войти, открыть `/whales` (лента + рейтинг, переключатель 24ч/7д) и `/markets/[id]` (график с маркерами китов + таблица крупных сделок). Для наполнения БД дёрнуть `sync-trades`, затем `aggregate-whales`.
 - На Vercel под-суточные расписания (`sync-trades` */3) требуют платного плана.
 
-## Фаза 4 — Портфель — `не начато`
-Data API `/positions` (+ `/value`); `/dashboard` с P&L, винрейтом, позициями; `tracked_wallets`.
-DoD: по введённому адресу корректно считается и показывается P&L и позиции.
+## Фаза 4 — Портфель — `готово`
+Data API `/positions` (+ `/value`); таблица `tracked_wallets`; страница `/dashboard` с вводом/выбором публичного адреса, сводкой (total value, P&L cash/%, win rate, число позиций) и таблицей позиций.
+
+Сделано:
+- Prisma-модель `tracked_wallets` (§6): `id`, `user_id` (fk→users, `onDelete: Cascade`), `address` (хранится в lowercase), `label?`, `created_at`; `@@unique([userId, address])` (нет дублей кошелька у юзера) + `@@index([userId])`. Связь `User.trackedWallets`. Миграция `add_tracked_wallets` применена (аддитивная, без потери данных).
+- Клиент Data API (`lib/polymarket/data.ts`): `getPositions(address)` — `GET /positions?user=…&sortBy=CURRENT&sortDirection=DESC&limit=500`; `getPortfolioValue(address)` — `GET /value?user=…` (форма `[{user,value}]`, парсится в число). Оба реюзят обёртку `fetchJson` (retry/backoff/TTL-кеш 60с) и деградируют мягко (`[]` / `null` при сбое — как `getWhaleTrades`). Типы `DataPosition`/`DataValue` — loose. Контракт сверен на живых данных. **Важно:** Data-API параметр кошелька — `user` (не `wallet`); `percentPnl` приходит в процентах (6.12 = 6.12%), поэтому % считаем сами из `cashPnl/initialValue`.
+- `lib/analytics/portfolio.ts` — чистые тестируемые функции (§0.5): `summarizePortfolio(positions)` (сумма value/cost basis/cashPnl, total % = cashPnl/costBasis, win rate = доля позиций в плюсе) и `isValidWalletAddress` (regex `0x` + 40 hex). Тесты на Vitest: `portfolio.test.ts` (10 кейсов) → всего 21/21.
+- Auth.js: добавлен `session`-callback (edge-safe) `token.sub → session.user.id`, чтобы серверные компоненты/actions скоупили данные по пользователю (нужно и для Фазы 5).
+- Server actions (`app/(app)/dashboard/actions.ts`, `"use server"`): `addTrackedWallet` (валидация адреса, lowercase, тихий дедуп по P2002, `revalidatePath` + редирект на `?wallet=`), `removeTrackedWallet` (`deleteMany` со скоупом `userId` — нельзя удалить чужой). Невалидный адрес → `?error=invalid-address`.
+- UI: `/dashboard` (серверный компонент, `force-dynamic`) — селектор кошельков (чипы-ссылки `?wallet=`), форма добавления, кнопка удаления; сводные карточки `PortfolioSummary`; таблица `PositionsTable` (рынок со ссылкой на наш `/markets/[id]` если рынок закэширован, исход, размер, средняя цена входа, текущая цена, P&L $ и %). Цвета +/− (зелёный/красный). Форматтер `formatShares` добавлен в `lib/format.ts`. Пустое состояние (нет кошельков / нет позиций / API недоступен) обрабатывается.
+
+Решение по P&L (для прозрачности): на дашборде P&L берётся напрямую из Data API `/positions` (`cashPnl`/`currentValue`/`initialValue`) — это авторитетный cost-basis Polymarket, в отличие от оценочного FIFO `computePnl` Фазы 3 (он только по китовым сделкам). Total value = `/value` если доступен (может включать кэш-баланс), иначе сумма `currentValue`. Win rate = доля позиций, которые сейчас в плюсе.
+
+Проверено локально (DoD):
+- Миграция применяется: `prisma migrate dev` → таблица `tracked_wallets`. ✅
+- `npm run typecheck` (strict), `npm run lint`, `npm run build`, `npm test` (21/21) проходят. ✅
+- Контракт Data API сверен на живых данных: `/positions` отдаёт `size/avgPrice/curPrice/initialValue/currentValue/cashPnl/percentPnl/title/outcome/conditionId/redeemable`; `/value` → `[{user,value}]`. ✅
+- Интеграционная проверка расчёта на живом адресе: `/value` (headline) ≈ сумма `currentValue`; per-position P&L = `currentValue − initialValue`; сводка считается корректно. ✅ (живые данные Polymarket)
+
+Ожидает действий пользователя:
+- Новых env-переменных нет (`DATA_API_BASE` уже в `.env.example` с дефолтом). Для входа на защищённый `/dashboard` нужны креды Фазы 1 (Google/Resend).
+- Визуальная проверка под авторизацией: войти → `/dashboard` → добавить публичный адрес (например, кошелёк из рейтинга `/whales`) → увидеть сводку и таблицу позиций; переключить/удалить кошелёк.
+- Гейтинг Free/Pro по числу кошельков (Free=1) сознательно отложен на Фазу 5 (монетизация) — сейчас можно добавлять несколько кошельков. График стоимости портфеля во времени (§8, опционально «если есть данные») отложен: нет источника таймсерии портфеля (отдельный cron вне рамок Фазы 4).
 
 ## Фаза 5 — Монетизация — `не начато`
 Stripe Checkout + Billing Portal + webhook; гейтинг Free/Pro.

@@ -21,9 +21,10 @@ model User {
   image         String?
   createdAt     DateTime  @default(now()) @map("created_at")
 
-  accounts     Account[]
-  sessions     Session[]
-  subscription Subscription?
+  accounts       Account[]
+  sessions       Session[]
+  subscription   Subscription?
+  trackedWallets TrackedWallet[]
 
   @@map("users")
 }
@@ -163,4 +164,22 @@ model WhaleWallet {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("whale_wallets")
+}
+
+// ---------- Portfolio (Phase 4) ----------
+// Public wallet addresses a user saves to view their Polymarket portfolio.
+// Read-only: an address is just a public string — no wallet connect/signing (§2).
+
+model TrackedWallet {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  address   String // public address, stored lowercased
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address]) // no duplicate wallet per user
+  @@index([userId])
+  @@map("tracked_wallets")
 }

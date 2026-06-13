@@ -2,7 +2,7 @@
 // Base: https://data-api.polymarket.com (override via DATA_API_BASE).
 
 import { fetchJson } from "./http";
-import type { DataTrade } from "./types";
+import type { DataPosition, DataTrade, DataValue } from "./types";
 
 const DATA_API_BASE =
   process.env.DATA_API_BASE ?? "https://data-api.polymarket.com";
@@ -39,5 +39,53 @@ export async function getWhaleTrades(
     return Array.isArray(trades) ? trades : [];
   } catch {
     return [];
+  }
+}
+
+/** Max positions to fetch per wallet (covers all but the heaviest wallets). */
+const POSITIONS_LIMIT = 500;
+
+/**
+ * Current positions for a public wallet (spec §5.3, §8 dashboard). One row per
+ * outcome held, sorted by current value desc. Returns [] on failure so the
+ * dashboard degrades gracefully, mirroring getWhaleTrades. TTL ~60s (§5.3).
+ */
+export async function getPositions(address: string): Promise<DataPosition[]> {
+  const params = new URLSearchParams({
+    user: address,
+    sortBy: "CURRENT",
+    sortDirection: "DESC",
+    limit: String(POSITIONS_LIMIT),
+  });
+  try {
+    const positions = await fetchJson<DataPosition[]>(
+      `${DATA_API_BASE}/positions?${params.toString()}`,
+      { cacheTtlMs: 60_000 },
+    );
+    return Array.isArray(positions) ? positions : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Total portfolio value (USDC) for a wallet (spec §5.3). Best-effort headline
+ * figure: the endpoint returns `[{ user, value }]`. Returns null on failure or
+ * an unparseable payload, so the dashboard can fall back to summed positions.
+ */
+export async function getPortfolioValue(
+  address: string,
+): Promise<number | null> {
+  const params = new URLSearchParams({ user: address });
+  try {
+    const res = await fetchJson<DataValue[] | DataValue>(
+      `${DATA_API_BASE}/value?${params.toString()}`,
+      { cacheTtlMs: 60_000 },
+    );
+    const raw = Array.isArray(res) ? res[0]?.value : res?.value;
+    const value = Number(String(raw));
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
   }
 }

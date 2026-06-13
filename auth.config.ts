@@ -33,5 +33,13 @@ export const authConfig = {
       if (isProtected && !isLoggedIn) return false;
       return true;
     },
+    // JWT strategy: the user id rides in token.sub. Expose it on the session so
+    // server components/actions can scope data to the signed-in user (§9).
+    session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
   },
 } satisfies NextAuthConfig;

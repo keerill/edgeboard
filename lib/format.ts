@@ -35,6 +35,13 @@ export function formatPercent(value: Numeric): string {
   return `${Math.round(n * 100)}%`;
 }
 
+/** Share count → grouped integer "51,020" (positions hold whole-ish shares). */
+export function formatShares(value: Numeric): string {
+  const n = toNumber(value);
+  if (n === null) return "—";
+  return Math.round(n).toLocaleString("en-US");
+}
+
 /** Wallet address → "0x1234…cdef". */
 export function shortenAddress(address: string): string {
   if (address.length <= 12) return address;
