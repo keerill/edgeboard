@@ -1,0 +1,116 @@
+.ticker {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--ring-top);
+  /* soften the edges so pills slide in and out instead of popping */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+
+  &:hover .track {
+    animation-play-state: paused;
+  }
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  padding: 0.55rem 0;
+  animation: tickerScroll 40s linear infinite;
+}
+
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* the duplicate set begins at exactly -50%, so the loop is seamless;
+       uniform per-item margin (not flex gap) keeps that midpoint exact */
+    transform: translateX(-50%);
+  }
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-right: var(--space-3);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+
+.wallet {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+
+.buy,
+.sell {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  border-radius: 999px;
+}
+
+.buy {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+
+.sell {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.size {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.market {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--subtle);
+}
+
+/* Freeze into a static, scrollable strip when the user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ticker {
+    overflow-x: auto;
+  }
+
+  .track {
+    animation: none;
+    transform: none;
+  }
+}

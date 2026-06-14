@@ -1,0 +1,5 @@
+.spark {
+  display: block;
+  /* color is inherited so callers can tint via `color: var(--success)` etc. */
+  color: currentColor;
+}

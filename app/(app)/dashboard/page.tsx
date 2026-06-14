@@ -1,6 +1,12 @@
 import Link from "next/link";
+import { Wallet } from "lucide-react";
 
 import { auth } from "@/auth";
+import { ContextBar } from "@/components/Shell/ContextBar";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { Donut } from "@/components/data/Donut";
+import { StatCard } from "@/components/data/StatCard";
+import { StatStrip } from "@/components/data/StatStrip";
 import { PortfolioSummary } from "@/components/PortfolioSummary/PortfolioSummary";
 import {
   PositionsTable,
@@ -11,6 +17,7 @@ import { prisma } from "@/lib/db/prisma";
 import { shortenAddress } from "@/lib/format";
 import { canAddWallet } from "@/lib/plan";
 import { getPortfolioValue, getPositions } from "@/lib/polymarket";
+import { getPlatformStatCards } from "@/lib/stats";
 import { getUserSubscription } from "@/lib/subscription";
 import { addTrackedWallet, removeTrackedWallet } from "./actions";
 import styles from "./dashboard.module.scss";
@@ -86,35 +93,38 @@ export default async function DashboardPage({
 
   const invalid = sp.error === "invalid-address";
   const limitError = sp.error === "wallet-limit";
-  const [wallets, sub] = await Promise.all([
+  const [wallets, sub, statCards] = await Promise.all([
     prisma.trackedWallet.findMany({
       where: { userId },
       orderBy: { createdAt: "asc" },
     }),
     getUserSubscription(userId),
+    getPlatformStatCards(),
   ]);
   const plan = sub?.plan === "pro" ? "pro" : "free";
   const canAdd = canAddWallet(plan, wallets.length);
 
-  const header = (
-    <header className={styles.head}>
-      <h1 className={styles.title}>Portfolio</h1>
-      <p className={styles.subtitle}>
-        Track any public Polymarket wallet&apos;s positions and P&amp;L.
-        Read-only — information only, not financial advice.
-      </p>
-    </header>
+  const statStrip = (
+    <StatStrip>
+      {statCards.map((c, i) => (
+        <StatCard key={i} {...c} />
+      ))}
+    </StatStrip>
   );
 
   // Empty state: prompt to add the first wallet.
   if (wallets.length === 0) {
     return (
       <section className={styles.page}>
-        {header}
-        <p className={styles.empty}>
-          Add a public wallet address to see its portfolio.
-        </p>
-        <AddWalletForm invalid={invalid} />
+        <ContextBar eyebrow="Smart money" title="Portfolio" />
+        {statStrip}
+        <EmptyState
+          icon={Wallet}
+          title="Track your first wallet"
+          description="Paste any public Polymarket wallet address to see its positions, P&L and win rate — no wallet connection needed."
+          action={<AddWalletForm invalid={invalid} />}
+          hint="Tip: paste any public 0x address — even a known whale's."
+        />
       </section>
     );
   }
@@ -173,29 +183,46 @@ export default async function DashboardPage({
     };
   });
 
+  // Allocation by current value → top 5 positions + "Other".
+  const compositionAll = positions
+    .map((p) => ({ label: p.title ?? "—", value: num(p.currentValue) }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+  const restVal = compositionAll.slice(5).reduce((s, d) => s + d.value, 0);
+  const composition =
+    restVal > 0
+      ? [...compositionAll.slice(0, 5), { label: "Other", value: restVal }]
+      : compositionAll.slice(0, 5);
+
+  const walletBar = (
+    <div className={styles.walletBar}>
+      <div className={styles.chips}>
+        {wallets.map((w) => (
+          <Link
+            key={w.id}
+            href={`/dashboard?wallet=${w.address}`}
+            className={w.id === selected.id ? styles.chipActive : styles.chip}
+          >
+            {w.label ?? shortenAddress(w.address)}
+          </Link>
+        ))}
+      </div>
+      <form action={removeTrackedWallet}>
+        <input type="hidden" name="id" value={selected.id} />
+        <button type="submit" className={styles.removeBtn}>
+          Remove
+        </button>
+      </form>
+    </div>
+  );
+
   return (
     <section className={styles.page}>
-      {header}
+      <ContextBar eyebrow="Smart money" title="Portfolio">
+        {walletBar}
+      </ContextBar>
 
-      <div className={styles.walletBar}>
-        <div className={styles.chips}>
-          {wallets.map((w) => (
-            <Link
-              key={w.id}
-              href={`/dashboard?wallet=${w.address}`}
-              className={w.id === selected.id ? styles.chipActive : styles.chip}
-            >
-              {w.label ?? shortenAddress(w.address)}
-            </Link>
-          ))}
-        </div>
-        <form action={removeTrackedWallet}>
-          <input type="hidden" name="id" value={selected.id} />
-          <button type="submit" className={styles.removeBtn}>
-            Remove
-          </button>
-        </form>
-      </div>
+      {statStrip}
 
       <p className={styles.viewing}>
         Viewing{" "}
@@ -217,23 +244,37 @@ export default async function DashboardPage({
         openPositions={summary.openPositions}
       />
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Positions</h2>
-        <PositionsTable
-          positions={rows}
-          emptyMessage="No open positions for this address (or the Data API is unavailable right now)."
-        />
-        <p className={styles.note}>
-          Value and P&amp;L are sourced from the Polymarket Data API. Win rate is
-          the share of positions currently in profit.
-        </p>
-      </section>
+      <div className="withRail">
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Positions</h2>
+          <PositionsTable
+            positions={rows}
+            emptyMessage="No open positions for this address (or the Data API is unavailable right now)."
+          />
+          <p className={styles.note}>
+            Value and P&amp;L are sourced from the Polymarket Data API. Win rate
+            is the share of positions currently in profit.
+          </p>
+        </section>
 
-      {canAdd ? (
-        <AddWalletForm invalid={invalid} />
-      ) : (
-        <WalletLimitNotice atLimitError={limitError} />
-      )}
+        <aside className="rail">
+          {composition.length > 0 ? (
+            <div className={styles.panel}>
+              <h2 className={styles.sectionTitle}>Allocation</h2>
+              <Donut data={composition} />
+            </div>
+          ) : null}
+
+          {canAdd ? (
+            <div className={styles.panel}>
+              <h2 className={styles.sectionTitle}>Add a wallet</h2>
+              <AddWalletForm invalid={invalid} />
+            </div>
+          ) : (
+            <WalletLimitNotice atLimitError={limitError} />
+          )}
+        </aside>
+      </div>
     </section>
   );
 }

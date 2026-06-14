@@ -1,0 +1,111 @@
+.card,
+.cardAccent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--ring-top);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.cardAccent {
+  border-color: var(--accent-border);
+  background:
+    radial-gradient(circle at 100% 0%, var(--accent-subtle) 0%, transparent 60%),
+    var(--surface);
+  box-shadow: var(--shadow-glow-sm), var(--ring-top);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--subtle);
+}
+
+.icon {
+  color: var(--subtle);
+  flex-shrink: 0;
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-tight);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 26px;
+}
+
+.deltaUp,
+.deltaDown,
+.deltaNeutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: 999px;
+}
+
+.deltaUp {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+
+.deltaDown {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.deltaNeutral {
+  color: var(--muted);
+  background: var(--surface-hover);
+}
+
+.deltaLabel {
+  margin-left: 0.2rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.deltaSpacer {
+  flex: 1;
+}
+
+/* sparkline color by trend (currentColor flows into the SVG) */
+.sparkUp {
+  color: var(--success);
+}
+
+.sparkDown {
+  color: var(--danger);
+}
+
+.sparkAccent {
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}

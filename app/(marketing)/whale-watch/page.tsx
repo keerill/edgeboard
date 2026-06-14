@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Crown } from "lucide-react";
+
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { StatCard } from "@/components/data/StatCard";
+import { StatStrip } from "@/components/data/StatStrip";
+import { Leaderboard, type LeaderRow } from "@/components/Leaderboard/Leaderboard";
+import { SmartMoneyPanel } from "@/components/Leaderboard/SmartMoneyPanel";
+import { WhaleTicker } from "@/components/marketing/WhaleTicker";
+import { Reveal } from "@/components/motion/Reveal";
 import { TradesTable } from "@/components/TradesTable/TradesTable";
 import type { TradeRow } from "@/components/TradesTable/TradesTable";
 import { prisma } from "@/lib/db/prisma";
-import { formatCompactUsd, formatRelativeTime, shortenAddress } from "@/lib/format";
+import { getPlatformStatCards } from "@/lib/stats";
 import styles from "./whale-watch.module.scss";
 
 // Public marketing page: a free taste of the whale feed, no auth required.
@@ -41,7 +50,7 @@ export default async function WhaleWatchPage({
   const period: Period = sp.period === "7d" ? "7d" : "24h";
   const cutoff = new Date(Date.now() - PERIOD_MS[period]);
 
-  const [feed, ranking] = await Promise.all([
+  const [feed, ranking, statCards] = await Promise.all([
     prisma.trade.findMany({
       where: { isWhale: true, ts: { gte: cutoff } },
       orderBy: { sizeUsdc: "desc" },
@@ -61,6 +70,7 @@ export default async function WhaleWatchPage({
       orderBy: { totalVolumeUsdc: "desc" },
       take: RANKING_LIMIT,
     }),
+    getPlatformStatCards(),
   ]);
 
   const trades: TradeRow[] = feed.map((t) => ({
@@ -74,6 +84,16 @@ export default async function WhaleWatchPage({
     market: t.market,
   }));
 
+  const leaderRows: LeaderRow[] = ranking.map((w, i) => ({
+    rank: i + 1,
+    address: w.address,
+    totalVolume: w.totalVolumeUsdc,
+    volShare24h: null,
+    realizedPnl: w.realizedPnl,
+    winRate: w.winRate,
+    lastActive: w.lastActive,
+  }));
+
   return (
     <div className={styles.page}>
       <header className={styles.head}>
@@ -84,6 +104,14 @@ export default async function WhaleWatchPage({
           Information only, not financial advice.
         </p>
       </header>
+
+      <WhaleTicker trades={trades} />
+
+      <StatStrip>
+        {statCards.map((c, i) => (
+          <StatCard key={i} {...c} />
+        ))}
+      </StatStrip>
 
       <div className={styles.controls}>
         <span className={styles.controlLabel}>Period</span>
@@ -98,7 +126,7 @@ export default async function WhaleWatchPage({
         ))}
       </div>
 
-      <section className={styles.section}>
+      <Reveal whenInView className={styles.section}>
         <h2 className={styles.sectionTitle}>Top trades</h2>
         <TradesTable
           trades={trades}
@@ -106,40 +134,26 @@ export default async function WhaleWatchPage({
           linkMarkets={false}
           emptyMessage="No whale trades in this window yet — check back soon."
         />
-      </section>
+      </Reveal>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Top whales by volume</h2>
-        {ranking.length === 0 ? (
-          <p className={styles.empty}>No whale wallets ranked yet.</p>
-        ) : (
-          <ol className={styles.ranking}>
-            {ranking.map((w, i) => (
-              <li key={w.address} className={styles.rankRow}>
-                <span className={styles.rank}>{i + 1}</span>
-                <a
-                  className={styles.rankWallet}
-                  href={`https://polymarket.com/profile/${w.address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {shortenAddress(w.address)}
-                </a>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Volume</span>
-                  {formatCompactUsd(w.totalVolumeUsdc)}
-                </span>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Active</span>
-                  {w.lastActive ? formatRelativeTime(w.lastActive) : "—"}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      {ranking.length === 0 ? (
+        <EmptyState
+          icon={Crown}
+          title="No ranked whales yet"
+          description="The leaderboard fills in as whale trades are ingested — check back soon."
+        />
+      ) : (
+        <Reveal whenInView>
+          <SmartMoneyPanel
+            title="Top smart-money wallets"
+            subtitle="Ranked by traded volume across Polymarket prediction markets."
+          >
+            <Leaderboard rows={leaderRows} />
+          </SmartMoneyPanel>
+        </Reveal>
+      )}
 
-      <section className={styles.cta}>
+      <Reveal whenInView className={styles.cta}>
         <p className={styles.ctaText}>
           Want the full feed, the whale leaderboard with estimated P&amp;L, and
           your own portfolio in one place?
@@ -147,7 +161,7 @@ export default async function WhaleWatchPage({
         <Link href="/signin" className={styles.ctaButton}>
           Sign up free
         </Link>
-      </section>
+      </Reveal>
     </div>
   );
 }

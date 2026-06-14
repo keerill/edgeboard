@@ -1,0 +1,26 @@
+/* Wrap a surface; a faint cyan glow follows the cursor across it. The glow is a
+   translucent radial layer on top, fading to transparent before the edges. */
+.spotlight {
+  position: relative;
+  border-radius: var(--radius-lg);
+}
+
+.spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, -20%),
+    var(--accent-2-subtle),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  pointer-events: none;
+}
+
+.spotlight:hover::after {
+  opacity: 1;
+}

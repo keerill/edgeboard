@@ -48,6 +48,23 @@ export function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/** Future date → coarse "3d left" / "5h left" / "12m left" / "Ended". */
+export function formatCountdown(
+  date: Date | string | number | null | undefined,
+): string {
+  if (date === null || date === undefined) return "—";
+  const ms = date instanceof Date ? date.getTime() : new Date(date).getTime();
+  if (Number.isNaN(ms)) return "—";
+  const diffSec = Math.round((ms - Date.now()) / 1000);
+  if (diffSec <= 0) return "Ended";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m left`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h left`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d left`;
+}
+
 /** Past date → coarse "just now" / "3m ago" / "5h ago" / "2d ago". */
 export function formatRelativeTime(date: Date | string | number): string {
   const ms = date instanceof Date ? date.getTime() : new Date(date).getTime();

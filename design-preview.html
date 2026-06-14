@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EdgeBoard — Dashboard design preview</title>
+<style>
+  /* ============================================================
+     Self-contained preview of the refined EdgeBoard dashboard.
+     Tokens mirror app/globals.scss (dark theme, faint violet tint).
+     Geist is unavailable offline, so we fall back to system fonts.
+     ============================================================ */
+  :root {
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-7: 3rem;
+
+    --fs-eyebrow: 0.75rem;
+    --fs-body: 0.9375rem;
+    --fs-stat: 2rem;
+    --fs-h2: 1.5rem;
+    --fs-h1: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+
+    --lh-tight: 1.15;
+    --lh-snug: 1.3;
+    --lh-body: 1.6;
+    --tracking-tight: -0.02em;
+    --tracking-snug: -0.01em;
+    --tracking-label: 0.04em;
+    --measure: 68ch;
+
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", monospace;
+
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 0.14s;
+    --dur: 0.2s;
+
+    --bg: #0a0a0e;
+    --surface: #131319;
+    --surface-2: #1a1a22;
+    --elevated: #1f1f29;
+    --surface-hover: rgba(255, 255, 255, 0.06);
+
+    --foreground: #f2f2f5;
+    --muted: #a5a5b0;
+    --subtle: #717180;
+
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+
+    --accent: #7c5cff;
+    --accent-hover: #9c85ff;
+    --accent-fg: #ffffff;
+    --accent-subtle: rgba(124, 92, 255, 0.16);
+    --accent-border: rgba(124, 92, 255, 0.42);
+
+    --success: #22c55e;
+    --success-subtle: rgba(34, 197, 94, 0.16);
+    --danger: #f87171;
+    --danger-subtle: rgba(248, 113, 113, 0.16);
+    --warning: #fbbf24;
+    --info: #22d3ee;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.18);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.28), 0 14px 32px -10px rgba(0, 0, 0, 0.55);
+    --ring-top: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    --sidebar-w: 244px;
+    --content-max: 1400px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .numeric { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* faint accent wash behind the whole shell, like the real app */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(120% 80% at 100% 0%, rgba(124, 92, 255, 0.08) 0%, transparent 55%);
+    z-index: 0;
+  }
+
+  /* ---------------- shell ---------------- */
+  .shell {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    min-height: 100vh;
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: 1.1rem 0.9rem;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .brandRow { display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0.4rem 0.5rem; }
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.125rem; font-weight: 700; letter-spacing: var(--tracking-snug); }
+  .brandMark { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--accent), var(--accent-hover)); box-shadow: 0 0 0 1px var(--accent-border); }
+
+  .nav { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
+  .link {
+    position: relative; display: inline-flex; align-items: center; gap: 0.55rem;
+    padding: 0.6rem 0.7rem; border-radius: var(--radius-sm);
+    color: var(--muted); font-weight: 500; font-size: 0.9375rem;
+    transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  }
+  .link:hover { color: var(--foreground); background: var(--surface-hover); }
+  .link.active { color: var(--accent); }
+  .link.active::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--accent-subtle); border-radius: var(--radius-sm); }
+  .dot { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid currentColor; opacity: 0.85; }
+
+  .bottom { display: flex; flex-direction: column; gap: var(--space-3); }
+  .proCard {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    padding: var(--space-3) 0.85rem;
+    border: 1px solid var(--accent-border); border-radius: var(--radius);
+    background: radial-gradient(circle at 0% 0%, var(--accent-subtle) 0%, transparent 70%), var(--surface-2);
+    box-shadow: var(--ring-top);
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .proCard:hover { border-color: var(--accent); }
+  .proTitle { font-size: 0.8125rem; font-weight: 600; color: var(--accent); }
+  .proText { font-size: 0.75rem; color: var(--muted); line-height: var(--lh-snug); }
+  .account { display: flex; align-items: center; gap: 0.5rem; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+  .email { flex: 1; min-width: 0; font-size: 0.8125rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .iconBtn {
+    display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0;
+    border: 1px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--muted);
+    transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+    font-size: 0.95rem;
+  }
+  .iconBtn:hover { color: var(--foreground); background: var(--surface-hover); border-color: var(--border-strong); }
+
+  /* ---------------- main ---------------- */
+  .main { padding: 1.75rem 2rem 3rem; min-width: 0; }
+  .page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+  .contextBar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; flex-direction: column; gap: var(--space-4);
+    margin: -1.75rem -2rem 1.5rem; padding: 1.1rem 2rem;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .cbHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+  .titles { display: flex; flex-direction: column; gap: 0.15rem; }
+  .eyebrow { font-size: var(--fs-eyebrow); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--subtle); }
+  .title { margin: 0; font-size: var(--fs-h1); font-weight: 800; letter-spacing: var(--tracking-tight); line-height: var(--lh-tight); }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .chip, .chipActive {
+    padding: 0.3rem 0.7rem; font-size: 0.8125rem; font-weight: 500; font-family: var(--font-mono);
+    border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: transparent;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .chip:hover { color: var(--foreground); background: var(--surface-hover); border-color: var(--border-strong); }
+  .chipActive { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+  /* stat strip */
+  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-4); }
+  .stat, .statAccent {
+    display: flex; flex-direction: column; gap: var(--space-2);
+    padding: var(--space-4) 1.1rem; border: 1px solid var(--border); border-radius: var(--radius-lg);
+    background: var(--surface); box-shadow: var(--ring-top);
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease-out);
+  }
+  .stat:hover, .statAccent:hover { transform: translateY(-2px); box-shadow: var(--shadow-md), var(--ring-top); border-color: var(--border-strong); }
+  .statAccent { border-color: var(--accent-border); background: radial-gradient(circle at 100% 0%, var(--accent-subtle) 0%, transparent 60%), var(--surface); }
+  .statHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .statLabel { font-size: var(--fs-eyebrow); font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--subtle); }
+  .statIco { color: var(--subtle); }
+  .statValue { font-family: var(--font-mono); font-size: var(--fs-stat); font-weight: 700; letter-spacing: var(--tracking-tight); line-height: var(--lh-tight); font-variant-numeric: tabular-nums; }
+  .statFoot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 26px; }
+  .delta { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.15rem 0.4rem; font-size: 0.75rem; font-weight: 600; border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .deltaUp { color: var(--success); background: var(--success-subtle); }
+  .deltaDown { color: var(--danger); background: var(--danger-subtle); }
+  .deltaLbl { font-weight: 500; opacity: 0.7; margin-left: 0.2rem; }
+  .spark { display: block; }
+  .sparkUp { color: var(--success); } .sparkDown { color: var(--danger); } .sparkAccent { color: var(--accent); }
+
+  /* viewing line */
+  .viewing { margin: -0.5rem 0 0; font-size: 0.8125rem; line-height: var(--lh-snug); color: var(--muted); }
+  .addr { font-family: var(--font-mono); color: var(--accent); }
+
+  /* portfolio summary */
+  .summary { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--space-3); }
+  .kpi, .kpiPos, .kpiNeg {
+    display: flex; flex-direction: column; gap: var(--space-2);
+    padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    background: var(--surface); box-shadow: var(--ring-top);
+  }
+  .kpiPos { background: var(--success-subtle); border-color: transparent; }
+  .kpiNeg { background: var(--danger-subtle); border-color: transparent; }
+  .kpiLabel { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--subtle); }
+  .kpiVal { font-family: var(--font-mono); font-size: 1.375rem; font-weight: 600; letter-spacing: var(--tracking-tight); line-height: var(--lh-tight); font-variant-numeric: tabular-nums; }
+  .kpiVal.pos { color: var(--success); } .kpiVal.neg { color: var(--danger); }
+
+  /* panels: positions + allocation */
+  .panels { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--space-4); align-items: start; }
+  .section { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+  .sectionTitle { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: var(--tracking-snug); }
+  .panel { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--ring-top); }
+  .note { margin: 0; max-width: var(--measure); font-size: 0.75rem; line-height: var(--lh-body); color: var(--muted); }
+
+  .tableWrap { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--ring-top); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th, td { padding: 0.7rem 0.875rem; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: right; }
+  th { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--subtle); background: var(--surface-2); }
+  th.left, td.left { text-align: left; }
+  td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  tbody tr { transition: background var(--dur-fast) var(--ease); }
+  tbody tr:hover { background: var(--surface-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  .market { color: var(--foreground); }
+  .sub { color: var(--subtle); font-size: 0.75rem; }
+  .pos { color: var(--success); } .neg { color: var(--danger); }
+  .side { display: inline-flex; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tracking-label); }
+  .sideYes { color: var(--success); background: var(--success-subtle); }
+  .sideNo { color: var(--danger); background: var(--danger-subtle); }
+
+  /* allocation donut */
+  .donut { display: flex; flex-direction: column; gap: var(--space-3); align-items: center; }
+  .ring {
+    width: 168px; height: 168px; border-radius: 999px;
+    background: conic-gradient(var(--accent) 0 38%, var(--info) 38% 63%, var(--success) 63% 82%, var(--warning) 82% 100%);
+    -webkit-mask: radial-gradient(circle 52px at center, transparent 99%, #000 100%);
+    mask: radial-gradient(circle 52px at center, transparent 99%, #000 100%);
+  }
+  .legend { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+  .legItem { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legLabel { flex: 1; color: var(--muted); }
+  .legVal { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* market cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--space-4); }
+  .card {
+    display: flex; flex-direction: column; gap: var(--space-3); height: 100%;
+    padding: var(--space-4) 1.2rem; border: 1px solid var(--border); border-radius: var(--radius-lg);
+    background: var(--surface); box-shadow: var(--ring-top);
+    transition: transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent-border); box-shadow: var(--shadow-md), var(--ring-top); background: var(--elevated); }
+  .cardTop { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .cat { padding: 0.15rem 0.5rem; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--accent); background: var(--accent-subtle); border-radius: 999px; }
+  .whale { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.45rem; font-size: 0.6875rem; font-weight: 700; color: var(--info); background: color-mix(in srgb, var(--info) 14%, transparent); border-radius: 999px; }
+  .question { margin: 0; font-size: var(--fs-body); font-weight: 600; line-height: var(--lh-snug); letter-spacing: var(--tracking-snug); }
+  .prob { display: flex; flex-direction: column; gap: 0.35rem; }
+  .probHead { display: flex; align-items: baseline; justify-content: space-between; }
+  .probLabel { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--subtle); }
+  .probVal { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .track { height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--surface-2) 70%, var(--bg)); overflow: hidden; }
+  .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); transition: width var(--dur) var(--ease-out); }
+  .cardStats { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: auto; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+  .cs { display: flex; flex-direction: column; gap: 0.1rem; }
+  .csLabel { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--subtle); }
+  .csVal { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  svg { display: block; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .panels { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <!-- ===== sidebar ===== -->
+    <aside class="sidebar">
+      <div class="brandRow">
+        <span class="brand"><span class="brandMark"></span>EdgeBoard</span>
+      </div>
+      <nav class="nav">
+        <a class="link active" href="#"><span class="dot"></span>Dashboard</a>
+        <a class="link" href="#"><span class="dot"></span>Markets</a>
+        <a class="link" href="#"><span class="dot"></span>Whales</a>
+        <a class="link" href="#"><span class="dot"></span>Settings</a>
+      </nav>
+      <div class="bottom">
+        <a class="proCard" href="#">
+          <span class="proTitle">★ Upgrade to Pro</span>
+          <span class="proText">Unlock full history, alerts and unlimited tracked wallets.</span>
+        </a>
+        <div class="account">
+          <button class="iconBtn" title="Toggle theme">◐</button>
+          <span class="email">ocahuqebubab13@gmail.com</span>
+          <button class="iconBtn" title="Sign out">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== main ===== -->
+    <main class="main">
+      <section class="page">
+        <div class="contextBar">
+          <div class="cbHead">
+            <div class="titles">
+              <span class="eyebrow">Smart money</span>
+              <h1 class="title">Portfolio</h1>
+            </div>
+            <div class="chips">
+              <button class="chipActive">0x1f4a…9c2e</button>
+              <button class="chip">0x88be…0a17</button>
+              <button class="chip">+ Add wallet</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI stat strip -->
+        <div class="strip">
+          <div class="statAccent">
+            <div class="statHead"><span class="statLabel">Whale volume 24h</span><span class="statIco">≈</span></div>
+            <div class="statValue">$4.812M</div>
+            <div class="statFoot">
+              <span class="delta deltaUp">▲ 12.4%<span class="deltaLbl">vs avg</span></span>
+              <span class="spark sparkAccent">
+                <svg width="78" height="26" viewBox="0 0 78 26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="0,20 13,16 26,18 39,10 52,12 65,5 78,7"></polyline>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="statHead"><span class="statLabel">Active whales 24h</span><span class="statIco">◇</span></div>
+            <div class="statValue">218</div>
+            <div class="statFoot">
+              <span class="delta deltaUp">▲ 4.1%</span>
+              <span class="spark sparkUp">
+                <svg width="78" height="26" viewBox="0 0 78 26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="0,18 13,19 26,14 39,15 52,9 65,11 78,6"></polyline>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="statHead"><span class="statLabel">Whale trades 24h</span><span class="statIco">⇄</span></div>
+            <div class="statValue">1,043</div>
+            <div class="statFoot">
+              <span class="delta deltaDown">▼ 2.3%</span>
+              <span class="spark sparkDown">
+                <svg width="78" height="26" viewBox="0 0 78 26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="0,8 13,10 26,9 39,14 52,13 65,18 78,17"></polyline>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="statHead"><span class="statLabel">Biggest trade 24h</span><span class="statIco">★</span></div>
+            <div class="statValue">$612K</div>
+            <div class="statFoot">
+              <span class="delta deltaUp">▲ 38.0%</span>
+              <span class="spark sparkAccent">
+                <svg width="78" height="26" viewBox="0 0 78 26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="0,21 13,19 26,20 39,12 52,14 65,8 78,4"></polyline>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="viewing">Viewing <a class="addr" href="#">0x1f4a…9c2e</a></p>
+
+        <!-- portfolio summary KPIs -->
+        <dl class="summary">
+          <div class="kpi"><dt class="kpiLabel">Portfolio value</dt><dd class="kpiVal" style="margin:0">$284,910</dd></div>
+          <div class="kpiPos"><dt class="kpiLabel">Total P&amp;L</dt><dd class="kpiVal pos" style="margin:0">+$41,208</dd></div>
+          <div class="kpiPos"><dt class="kpiLabel">Return</dt><dd class="kpiVal pos" style="margin:0">+16.9%</dd></div>
+          <div class="kpi"><dt class="kpiLabel">Win rate</dt><dd class="kpiVal" style="margin:0">64%</dd></div>
+          <div class="kpi"><dt class="kpiLabel">Open positions</dt><dd class="kpiVal" style="margin:0">12</dd></div>
+        </dl>
+
+        <!-- panels -->
+        <div class="panels">
+          <section class="section">
+            <h2 class="sectionTitle">Positions</h2>
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="left">Market</th>
+                    <th>Side</th>
+                    <th>Value</th>
+                    <th>P&amp;L</th>
+                    <th>Return</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="left"><div class="market">Will BTC close above $100K in 2026?</div><div class="sub">Crypto · ends 12d</div></td>
+                    <td><span class="side sideYes">Yes</span></td>
+                    <td class="num">$92,400</td>
+                    <td class="num pos">+$18,120</td>
+                    <td class="num pos">+24.4%</td>
+                  </tr>
+                  <tr>
+                    <td class="left"><div class="market">US recession declared before Q3?</div><div class="sub">Economy · ends 41d</div></td>
+                    <td><span class="side sideNo">No</span></td>
+                    <td class="num">$61,050</td>
+                    <td class="num pos">+$9,430</td>
+                    <td class="num pos">+18.3%</td>
+                  </tr>
+                  <tr>
+                    <td class="left"><div class="market">Fed cuts rates at June meeting?</div><div class="sub">Economy · ends 6d</div></td>
+                    <td><span class="side sideYes">Yes</span></td>
+                    <td class="num">$48,800</td>
+                    <td class="num neg">−$3,210</td>
+                    <td class="num neg">−6.2%</td>
+                  </tr>
+                  <tr>
+                    <td class="left"><div class="market">ETH ETF net inflows positive this month?</div><div class="sub">Crypto · ends 19d</div></td>
+                    <td><span class="side sideYes">Yes</span></td>
+                    <td class="num">$82,660</td>
+                    <td class="num pos">+$16,868</td>
+                    <td class="num pos">+25.6%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">Value and P&amp;L sourced from the Polymarket Data API. Figures refresh roughly every minute and are for information only — not financial advice.</p>
+          </section>
+
+          <aside class="panel">
+            <h2 class="sectionTitle">Allocation</h2>
+            <div class="donut">
+              <div class="ring"></div>
+              <ul class="legend" style="list-style:none;margin:0;padding:0">
+                <li class="legItem"><span class="swatch" style="background:var(--accent)"></span><span class="legLabel">Crypto</span><span class="legVal">38%</span></li>
+                <li class="legItem"><span class="swatch" style="background:var(--info)"></span><span class="legLabel">Economy</span><span class="legVal">25%</span></li>
+                <li class="legItem"><span class="swatch" style="background:var(--success)"></span><span class="legLabel">Politics</span><span class="legVal">19%</span></li>
+                <li class="legItem"><span class="swatch" style="background:var(--warning)"></span><span class="legLabel">Sports</span><span class="legVal">18%</span></li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+
+        <!-- trending market cards -->
+        <section class="section">
+          <h2 class="sectionTitle">Trending markets</h2>
+          <div class="grid">
+            <a class="card" href="#">
+              <div class="cardTop"><span class="cat">Crypto</span><span class="whale">🐋 7</span></div>
+              <p class="question">Will Bitcoin close above $100,000 at any point in 2026?</p>
+              <div class="prob">
+                <div class="probHead"><span class="probLabel">Yes</span><span class="probVal">62.4%</span></div>
+                <div class="track"><div class="fill" style="width:62.4%"></div></div>
+              </div>
+              <div class="cardStats">
+                <span class="cs"><span class="csLabel">Volume</span><span class="csVal">$8.4M</span></span>
+                <span class="cs"><span class="csLabel">Liquidity</span><span class="csVal">$1.2M</span></span>
+                <span class="cs"><span class="csLabel">Ends</span><span class="csVal">12d</span></span>
+              </div>
+            </a>
+            <a class="card" href="#">
+              <div class="cardTop"><span class="cat">Economy</span><span class="whale">🐋 4</span></div>
+              <p class="question">Will the Fed cut rates at its June meeting?</p>
+              <div class="prob">
+                <div class="probHead"><span class="probLabel">Yes</span><span class="probVal">47.1%</span></div>
+                <div class="track"><div class="fill" style="width:47.1%"></div></div>
+              </div>
+              <div class="cardStats">
+                <span class="cs"><span class="csLabel">Volume</span><span class="csVal">$3.1M</span></span>
+                <span class="cs"><span class="csLabel">Liquidity</span><span class="csVal">$740K</span></span>
+                <span class="cs"><span class="csLabel">Ends</span><span class="csVal">6d</span></span>
+              </div>
+            </a>
+            <a class="card" href="#">
+              <div class="cardTop"><span class="cat">Politics</span></div>
+              <p class="question">Will a US government shutdown begin before October?</p>
+              <div class="prob">
+                <div class="probHead"><span class="probLabel">Yes</span><span class="probVal">29.8%</span></div>
+                <div class="track"><div class="fill" style="width:29.8%"></div></div>
+              </div>
+              <div class="cardStats">
+                <span class="cs"><span class="csLabel">Volume</span><span class="csVal">$1.9M</span></span>
+                <span class="cs"><span class="csLabel">Liquidity</span><span class="csVal">$410K</span></span>
+                <span class="cs"><span class="csLabel">Ends</span><span class="csVal">88d</span></span>
+              </div>
+            </a>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

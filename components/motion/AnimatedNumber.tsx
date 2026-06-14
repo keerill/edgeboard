@@ -3,6 +3,31 @@
 import { animate, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  formatCompactUsd,
+  formatPercent,
+  formatYesPrice,
+} from "@/lib/format";
+
+// A string token instead of a function — functions can't cross the
+// server→client component boundary, and the number is animated client-side.
+export type NumberFormat = "plain" | "int" | "usd" | "percent" | "yes";
+
+function applyFormat(format: NumberFormat | undefined, n: number): string {
+  switch (format) {
+    case "usd":
+      return formatCompactUsd(n);
+    case "percent":
+      return formatPercent(n);
+    case "yes":
+      return formatYesPrice(n);
+    case "int":
+      return Math.round(n).toLocaleString();
+    default:
+      return Math.round(n).toLocaleString();
+  }
+}
+
 // Count-up animation between value changes. Renders the final, formatted value
 // on first paint (SSR-safe — no hydration mismatch, no count-up on initial load)
 // and only animates when `value` changes on subsequent client renders.
@@ -12,7 +37,7 @@ export function AnimatedNumber({
   className,
 }: {
   value: number;
-  format?: (n: number) => string;
+  format?: NumberFormat;
   className?: string;
 }) {
   const reduce = useReducedMotion();
@@ -34,9 +59,5 @@ export function AnimatedNumber({
     return () => controls.stop();
   }, [value, reduce]);
 
-  return (
-    <span className={className}>
-      {format ? format(display) : Math.round(display).toLocaleString()}
-    </span>
-  );
+  return <span className={className}>{applyFormat(format, display)}</span>;
 }

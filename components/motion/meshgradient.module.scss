@@ -1,0 +1,43 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blobA,
+.blobB,
+.blobC {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+
+.blobA {
+  top: -12%;
+  left: 2%;
+  width: 42vw;
+  height: 42vw;
+  opacity: 0.5;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 68%);
+}
+
+.blobB {
+  top: -8%;
+  right: 0%;
+  width: 36vw;
+  height: 36vw;
+  opacity: 0.45;
+  background: radial-gradient(circle, var(--accent-2-glow) 0%, transparent 68%);
+}
+
+.blobC {
+  bottom: -18%;
+  left: 36%;
+  width: 46vw;
+  height: 46vw;
+  opacity: 0.38;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+}

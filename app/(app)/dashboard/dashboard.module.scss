@@ -1,24 +1,27 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-5);
 }
 
 .head {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: var(--space-1);
 }
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
   font-weight: 700;
+  letter-spacing: var(--tracking-tight);
 }
 
 .subtitle {
   margin: 0;
   font-size: 0.875rem;
+  line-height: var(--lh-snug);
   color: var(--muted);
 }
 
@@ -46,9 +49,14 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-subtle), var(--shadow-glow-sm);
+  }
 }
 
 .chip {
@@ -65,6 +73,7 @@
   background: var(--accent);
   color: var(--accent-fg);
   border-color: var(--accent);
+  box-shadow: var(--shadow-glow-sm);
 }
 
 .removeBtn {
@@ -75,15 +84,27 @@
   border-radius: var(--radius);
   background: transparent;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 
   &:hover {
+    color: var(--foreground);
     background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
 }
 
 .viewing {
   margin: -0.5rem 0 0;
   font-size: 0.8125rem;
+  line-height: var(--lh-snug);
   color: var(--muted);
 }
 
@@ -95,21 +116,48 @@
   }
 }
 
+.panels {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 1rem;
+  align-items: start;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--ring-top);
+}
+
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .sectionTitle {
   margin: 0;
+  font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 600;
+  letter-spacing: var(--tracking-snug);
 }
 
 .note {
   margin: 0;
+  max-width: var(--measure);
   font-size: 0.75rem;
+  line-height: var(--lh-body);
   color: var(--muted);
 }
 
@@ -127,15 +175,23 @@
 
 .input,
 .inputLabel {
-  padding: 0.55rem 0.75rem;
+  padding: 0.55rem var(--space-3);
   font-size: 0.875rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--foreground);
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+
+  &::placeholder {
+    color: var(--subtle);
+  }
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
 
   &:focus {
     outline: none;
@@ -154,7 +210,7 @@
 }
 
 .addBtn {
-  padding: 0.55rem 1rem;
+  padding: 0.55rem var(--space-4);
   font-size: 0.875rem;
   font-weight: 600;
   border: 1px solid var(--accent);
@@ -163,12 +219,18 @@
   color: var(--accent-fg);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 
   &:hover {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
 }
 
@@ -181,21 +243,24 @@
 
 .upsell {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem 1.1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) 1.1rem;
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 0% 0%, var(--accent-subtle) 0%, transparent 60%),
+    radial-gradient(80% 100% at 0% 0%, var(--accent-subtle) 0%, transparent 60%),
+    radial-gradient(70% 100% at 100% 100%, var(--accent-2-subtle) 0%, transparent 60%),
     var(--surface);
+  box-shadow: var(--shadow-glow-sm), var(--ring-top);
 }
 
 .upsellText {
   margin: 0;
+  max-width: var(--measure);
   font-size: 0.875rem;
+  line-height: var(--lh-body);
   color: var(--muted);
 }
 
@@ -209,11 +274,17 @@
   color: var(--accent-fg);
   white-space: nowrap;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 
   &:hover {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
 }

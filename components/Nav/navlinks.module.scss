@@ -4,6 +4,20 @@
   font-size: 0.875rem;
 }
 
+.linksSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.9375rem;
+
+  .link,
+  .linkActive {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.6rem 0.7rem;
+  }
+}
+
 .link,
 .linkActive {
   position: relative;
@@ -15,15 +29,21 @@
   color: var(--muted);
   font-weight: 500;
   white-space: nowrap;
-  transition: color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease);
 
   &:hover {
     color: var(--foreground);
   }
+
+  &:focus-visible {
+    outline: none;
+    color: var(--foreground);
+    box-shadow: 0 0 0 3px var(--accent-subtle), var(--shadow-glow-sm);
+  }
 }
 
 .linkActive {
-  color: var(--accent);
+  color: var(--accent-hover);
 }
 
 /* sliding active background — animated via motion layoutId */
@@ -32,7 +52,9 @@
   inset: 0;
   z-index: -1;
   background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
   border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-glow-sm);
 }
 
 .icon {
@@ -40,8 +62,8 @@
 }
 
 @media (max-width: 560px) {
-  .link span,
-  .linkActive span {
+  .links .link span,
+  .links .linkActive span {
     display: none;
   }
 }

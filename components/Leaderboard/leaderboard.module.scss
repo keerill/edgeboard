@@ -1,0 +1,153 @@
+.wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.7rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    color: var(--subtle);
+    background: var(--surface-2);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr {
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  tbody tr:hover {
+    background: var(--surface-hover);
+  }
+}
+
+.left {
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rankCol {
+  width: 2.5rem;
+  text-align: center;
+}
+
+.rank,
+.rank1,
+.rank2,
+.rank3 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+
+.rank1 {
+  color: var(--rank-gold-fg);
+  background: var(--rank-gold);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.rank2 {
+  color: var(--rank-silver-fg);
+  background: var(--rank-silver);
+}
+
+.rank3 {
+  color: var(--rank-bronze-fg);
+  background: var(--rank-bronze);
+}
+
+.walletCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.addr {
+  font-family: var(--font-mono);
+  transition: color var(--dur-fast) var(--ease);
+
+  &:hover {
+    color: var(--accent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    color: var(--accent);
+    text-decoration: underline;
+  }
+}
+
+.pos {
+  color: var(--success);
+}
+
+.neg {
+  color: var(--danger);
+}
+
+.winCol {
+  text-align: right;
+  min-width: 9rem;
+}
+
+.winCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.winBar {
+  width: 4rem;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--bg));
+  overflow: hidden;
+}
+
+.winFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+}
+
+.winVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5rem;
+  text-align: right;
+}

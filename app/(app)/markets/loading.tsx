@@ -18,6 +18,8 @@ export default function MarketsLoading() {
             <Skeleton w="4.5rem" h="0.9rem" radius="pill" />
             <Skeleton w="90%" h="1.1rem" />
             <Skeleton w="70%" h="1.1rem" />
+            <Skeleton w="100%" h="0.4rem" radius="pill" />
+            <Skeleton w="100%" h="2rem" radius="sm" />
             <div className={s.row}>
               <Skeleton w="3.5rem" h="1.4rem" />
               <Skeleton w="3.5rem" h="1.4rem" />

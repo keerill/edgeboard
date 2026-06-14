@@ -1,0 +1,48 @@
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem 2.25rem;
+  padding: 1.5rem;
+  border-block: 1px solid var(--border);
+}
+
+.lead {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--subtle);
+}
+
+.logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  transition: color 0.15s ease;
+
+  svg {
+    color: var(--accent);
+  }
+
+  &:hover {
+    color: var(--foreground);
+  }
+}

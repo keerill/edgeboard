@@ -1,34 +1,117 @@
 :root {
   /* layout / radius */
-  --radius: 8px;
   --radius-sm: 6px;
-  --radius-lg: 12px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --max-width: 64rem;
 
+  /* app shell + content width (v2 — fluid, ultrawide-aware) */
+  --sidebar-w: 244px;
+  --content-max: 1760px;
+  --content-max-text: 1100px; /* opt-in cap for prose: settings/terms/privacy */
+  --rail-w: 320px; /* right-rail width on wide+ screens */
+  --gutter: clamp(1rem, 0.5rem + 2.2vw, 2.75rem);
+  --space-section: clamp(2.5rem, 1.8rem + 2.5vw, 4.5rem);
+
+  /* spacing scale — 4px base, single rhythm across the app */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* type scale — fluid so large monitors get bigger headings/stats */
+  --fs-eyebrow: 0.75rem;
+  --fs-body: 0.9375rem;
+  --fs-stat: clamp(1.75rem, 1.5rem + 1vw, 2.4rem);
+  --fs-h2: clamp(1.35rem, 1.2rem + 0.6vw, 1.75rem);
+  --fs-section-title: clamp(1.5rem, 1.3rem + 0.9vw, 2.1rem);
+  --fs-h1: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  --fs-hero: clamp(2.5rem, 1.4rem + 4.6vw, 5rem);
+  --fw-bold: 700;
+  /* Nansen-style display weight: semibold-confident, not brutal black.
+     Geist at 800 reads heavy, so the loudest headings cap at 700. */
+  --fw-black: 700;
+
+  /* line-height + tracking — readable prose, tight headings */
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-body: 1.6;
+  --tracking-tight: -0.02em;
+  --tracking-snug: -0.01em;
+  --tracking-label: 0.04em;
+  --measure: 68ch;
+
   /* typography (wired by next/font in app/layout.tsx) */
-  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  /* ===== DARK is the default surface (Nansen-style) ===== */
-  --bg: #0b0b0f;
-  --surface: #131318;
-  --surface-2: #1a1a21;
-  --elevated: #1e1e26;
+  /* motion — one tasteful timing instead of scattered durations */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 0.14s;
+  --dur: 0.2s;
+  --dur-slow: 0.45s;
+
+  /* ===== DARK is the default surface (Nansen-style, faint violet tint) ===== */
+  --bg: #0a0a0e;
+  --surface: #131319;
+  --surface-2: #1a1a22;
+  --elevated: #1f1f29;
   --surface-hover: rgba(255, 255, 255, 0.06);
 
-  --foreground: #ededf0;
-  --muted: #a1a1aa;
-  --subtle: #6b6b76;
+  --foreground: #f2f2f5;
+  --muted: #a5a5b0;
+  --subtle: #717180;
 
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  /* brand accent — royal violet */
-  --accent: #8b5cf6;
-  --accent-hover: #a78bfa;
+  /* brand accent — electric indigo-violet (luminous, premium, Nansen-energy) */
+  --accent: #7c5cff;
+  --accent-hover: #9c85ff;
   --accent-fg: #ffffff;
-  --accent-subtle: rgba(139, 92, 246, 0.16);
-  --accent-border: rgba(139, 92, 246, 0.4);
+  --accent-subtle: rgba(124, 92, 255, 0.16);
+  --accent-border: rgba(124, 92, 255, 0.42);
+  --accent-glow: rgba(124, 92, 255, 0.45);
+  --shadow-glow: 0 0 24px rgba(124, 92, 255, 0.45);
+  --shadow-glow-sm: 0 0 12px rgba(124, 92, 255, 0.35);
+
+  /* secondary accent — cyan (duotone partner; already the aurora's 2nd hue) */
+  --accent-2: #22d3ee;
+  --accent-2-hover: #67e8f9;
+  --accent-2-subtle: rgba(34, 211, 238, 0.14);
+  --accent-2-border: rgba(34, 211, 238, 0.4);
+  --accent-2-glow: rgba(34, 211, 238, 0.4);
+
+  /* duotone gradients — core of the "expanded" palette (violet → cyan) */
+  --grad-brand: linear-gradient(120deg, var(--accent), var(--accent-2));
+  --grad-brand-soft: linear-gradient(120deg, var(--accent-subtle), var(--accent-2-subtle));
+  --grad-text: linear-gradient(110deg, var(--accent-hover), var(--accent-2));
+  --glow-duo: 0 0 28px -4px var(--accent-glow), 0 0 36px -8px var(--accent-2-glow);
+
+  /* aurora / mesh — soft indigo-violet+cyan wash (hero + faint app shell) */
+  --aurora:
+    radial-gradient(38% 50% at 18% 12%, rgba(124, 92, 255, 0.18) 0%, transparent 60%),
+    radial-gradient(34% 46% at 82% 8%, rgba(34, 211, 238, 0.1) 0%, transparent 62%),
+    radial-gradient(50% 60% at 60% 95%, rgba(156, 133, 255, 0.1) 0%, transparent 60%);
+  --aurora-shell:
+    radial-gradient(120% 80% at 100% 0%, rgba(124, 92, 255, 0.08) 0%, transparent 55%),
+    radial-gradient(90% 60% at 0% 0%, rgba(34, 211, 238, 0.05) 0%, transparent 60%);
+
+  /* leaderboard rank medals (tokenized so they stay theme-tweakable) */
+  --rank-gold: linear-gradient(135deg, #fde68a, #f59e0b);
+  --rank-gold-fg: #1a1205;
+  --rank-silver: linear-gradient(135deg, #e5e7eb, #9ca3af);
+  --rank-silver-fg: #15171a;
+  --rank-bronze: linear-gradient(135deg, #fed7aa, #d97706);
+  --rank-bronze-fg: #1a1205;
 
   /* semantic status — green/red reserved strictly for buy/sell */
   --success: #22c55e;
@@ -38,8 +121,16 @@
   --warning: #fbbf24;
   --info: #22d3ee;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  /* layered, soft shadows + hairline top highlight for premium depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.28), 0 14px 32px -10px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3), 0 28px 56px -16px rgba(0, 0, 0, 0.6);
+  --ring-top: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  /* glass surfaces — formalizes the ad-hoc color-mix + blur used in chrome */
+  --glass-bg: color-mix(in srgb, var(--bg) 82%, transparent);
+  --surface-glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-blur: saturate(180%) blur(12px);
 
   /* back-compat alias: many modules still use var(--background) */
   --background: var(--bg);
@@ -59,11 +150,29 @@
   --border: rgba(0, 0, 0, 0.1);
   --border-strong: rgba(0, 0, 0, 0.16);
 
-  --accent: #7c3aed;
-  --accent-hover: #6d28d9;
+  --accent: #6d3aed;
+  --accent-hover: #5a2fd0;
   --accent-fg: #ffffff;
-  --accent-subtle: rgba(124, 58, 237, 0.1);
-  --accent-border: rgba(124, 58, 237, 0.35);
+  --accent-subtle: rgba(109, 58, 237, 0.1);
+  --accent-border: rgba(109, 58, 237, 0.32);
+  --accent-glow: rgba(109, 58, 237, 0.28);
+  --shadow-glow: 0 0 16px rgba(109, 58, 237, 0.22);
+  --shadow-glow-sm: 0 0 10px rgba(109, 58, 237, 0.18);
+
+  --accent-2: #0891b2;
+  --accent-2-hover: #0e7490;
+  --accent-2-subtle: rgba(8, 145, 178, 0.1);
+  --accent-2-border: rgba(8, 145, 178, 0.28);
+  --accent-2-glow: rgba(8, 145, 178, 0.2);
+
+  /* aurora — fainter on light surfaces so it doesn't muddy white */
+  --aurora:
+    radial-gradient(38% 50% at 18% 12%, rgba(109, 58, 237, 0.1) 0%, transparent 60%),
+    radial-gradient(34% 46% at 82% 8%, rgba(8, 145, 178, 0.06) 0%, transparent 62%),
+    radial-gradient(50% 60% at 60% 95%, rgba(124, 92, 255, 0.06) 0%, transparent 60%);
+  --aurora-shell:
+    radial-gradient(120% 80% at 100% 0%, rgba(109, 58, 237, 0.05) 0%, transparent 55%),
+    radial-gradient(90% 60% at 0% 0%, rgba(8, 145, 178, 0.03) 0%, transparent 60%);
 
   --success: #16a34a;
   --success-subtle: rgba(22, 163, 74, 0.12);
@@ -72,8 +181,11 @@
   --warning: #d97706;
   --info: #0891b2;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 18px 36px -14px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08), 0 30px 60px -18px rgba(0, 0, 0, 0.16);
+  /* no luminous top edge on light surfaces */
+  --ring-top: none;
 }
 
 *,
@@ -93,8 +205,21 @@ body {
   background: var(--bg);
   color: var(--foreground);
   font-family: var(--font-sans);
+  line-height: var(--lh-body);
+  font-feature-settings: "cv01", "ss03";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* faint aurora wash behind the whole app — peeks through at gutters,
+   sits under the opaque sidebar/cards so content stays readable */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--aurora-shell);
 }
 
 a {
@@ -105,6 +230,37 @@ a {
 button {
   font: inherit;
   cursor: pointer;
+}
+
+/* mono + tabular numerics for stats/prices/addresses */
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fluid two-column page layout: main + optional right rail on wide screens.
+   Below 1440 the rail stacks under main (single column). Used app-wide via
+   plain global classes (globals.scss is a global stylesheet, not a module). */
+.withRail {
+  display: grid;
+  gap: var(--gutter);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+.withRail > .rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+@media (min-width: 1440px) {
+  .withRail {
+    grid-template-columns: minmax(0, 1fr) var(--rail-w);
+  }
+  .withRail > .rail {
+    position: sticky;
+    top: 1.5rem;
+  }
 }
 
 /* Accessibility: respect reduced-motion globally */

@@ -1,5 +1,5 @@
 import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
-import { formatCompactUsd, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import styles from "./PortfolioSummary.module.scss";
 
 export interface PortfolioSummaryProps {
@@ -38,13 +38,13 @@ export function PortfolioSummary({
       <div className={styles.card}>
         <dt className={styles.label}>Total value</dt>
         <dd className={styles.value}>
-          <AnimatedNumber value={totalValue} format={formatCompactUsd} />
+          <AnimatedNumber value={totalValue} format="usd" />
         </dd>
       </div>
       <div className={tileClass(totalCashPnl)}>
         <dt className={styles.label}>Cash P&amp;L</dt>
         <dd className={pnlClass(totalCashPnl)}>
-          <AnimatedNumber value={totalCashPnl} format={formatCompactUsd} />
+          <AnimatedNumber value={totalCashPnl} format="usd" />
         </dd>
       </div>
       <div className={tileClass(totalPercentPnl)}>
@@ -53,7 +53,7 @@ export function PortfolioSummary({
           {totalPercentPnl === null ? (
             formatPercent(totalPercentPnl)
           ) : (
-            <AnimatedNumber value={totalPercentPnl} format={formatPercent} />
+            <AnimatedNumber value={totalPercentPnl} format="percent" />
           )}
         </dd>
       </div>
@@ -66,7 +66,7 @@ export function PortfolioSummary({
         <dd className={styles.value}>
           <AnimatedNumber
             value={openPositions}
-            format={(n) => String(Math.round(n))}
+            format="int"
           />
         </dd>
       </div>

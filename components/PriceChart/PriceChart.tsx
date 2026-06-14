@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { useReducedMotion } from "motion/react";
+
 import { useThemeColors } from "@/components/Theme/useThemeColors";
 import styles from "./PriceChart.module.scss";
 
@@ -51,6 +53,7 @@ function formatAxisPercent(value: number): string {
 
 export function PriceChart({ points, whales }: PriceChartProps) {
   const colors = useThemeColors();
+  const reduce = useReducedMotion();
 
   if (points.length === 0) {
     return (
@@ -63,7 +66,7 @@ export function PriceChart({ points, whales }: PriceChartProps) {
 
   const buy = colors["--success"] || BUY_FALLBACK;
   const sell = colors["--danger"] || SELL_FALLBACK;
-  const line = colors["--accent"] || "#8b5cf6";
+  const line = colors["--accent"] || "#7c5cff";
   const dotStroke = colors["--bg"] || "#0b0b0f";
 
   const allTs = [...points.map((p) => p.ts), ...whales.map((w) => w.ts)];
@@ -118,7 +121,8 @@ export function PriceChart({ points, whales }: PriceChartProps) {
             dataKey="price"
             stroke="none"
             fill="url(#priceFill)"
-            isAnimationActive={false}
+            isAnimationActive={!reduce}
+            animationDuration={700}
           />
           <Line
             type="monotone"
@@ -126,7 +130,7 @@ export function PriceChart({ points, whales }: PriceChartProps) {
             stroke={line}
             strokeWidth={2}
             dot={false}
-            isAnimationActive
+            isAnimationActive={!reduce}
             animationDuration={650}
           />
           {whales.map((w, i) => (

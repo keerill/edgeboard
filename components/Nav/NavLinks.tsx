@@ -22,12 +22,18 @@ const ICONS: Record<string, LucideIcon> = {
 
 type NavItem = { href: string; label: string };
 
-export function NavLinks({ items }: { items: NavItem[] }) {
+export function NavLinks({
+  items,
+  variant = "horizontal",
+}: {
+  items: NavItem[];
+  variant?: "horizontal" | "sidebar";
+}) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
   return (
-    <div className={styles.links}>
+    <div className={variant === "sidebar" ? styles.linksSidebar : styles.links}>
       {items.map((item) => {
         const Icon = ICONS[item.href];
         const active =

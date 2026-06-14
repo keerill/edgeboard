@@ -2,7 +2,7 @@
   margin: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .card,
@@ -10,11 +10,12 @@
 .cardNeg {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.9rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--ring-top);
 }
 
 .cardPos {
@@ -29,8 +30,9 @@
 
 .label {
   font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-label);
   color: var(--subtle);
 }
 
@@ -41,7 +43,8 @@
   font-size: 1.375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-tight);
 }
 
 .pos {

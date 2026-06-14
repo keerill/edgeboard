@@ -9,8 +9,8 @@
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
 }
 
 .nav {
@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: var(--max-width);
+  max-width: 72rem;
   margin: 0 auto;
   padding: 1rem 1.5rem;
 }
@@ -27,6 +27,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -36,8 +37,8 @@
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  box-shadow: 0 0 0 1px var(--accent-border);
+  background: var(--grad-brand);
+  box-shadow: var(--shadow-glow-sm), 0 0 0 1px var(--accent-border);
 }
 
 .navRight {
@@ -59,20 +60,24 @@
 
 .signInBtn {
   border-radius: var(--radius);
-  background: var(--accent);
+  background: var(--grad-brand);
   color: var(--accent-fg);
   padding: 0.45rem 0.85rem;
   font-weight: 600;
-  transition: background 0.15s ease;
+  box-shadow: var(--shadow-glow-sm);
+  transition:
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
 
   &:hover {
-    background: var(--accent-hover);
+    box-shadow: var(--glow-duo);
+    filter: brightness(1.08);
   }
 }
 
 .main {
   width: 100%;
-  max-width: var(--max-width);
+  max-width: 72rem;
   flex: 1;
   margin: 0 auto;
   padding: 3rem 1.5rem;
@@ -89,7 +94,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: var(--max-width);
+  max-width: 72rem;
   margin: 0 auto;
 
   @media (min-width: 640px) {

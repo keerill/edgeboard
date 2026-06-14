@@ -1,0 +1,51 @@
+/* Big-number platform band. 1px gaps over a border-colored backdrop render as
+   hairline dividers between opaque cells. */
+.band {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--border);
+  box-shadow: var(--ring-top);
+
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.75rem 1.5rem;
+  background: var(--surface);
+}
+
+.value {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.suffix {
+  margin-left: 0.1rem;
+  color: var(--accent);
+}
+
+.label {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--subtle);
+}

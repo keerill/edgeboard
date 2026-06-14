@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { MeshGradient } from "@/components/motion/MeshGradient";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { ThemeToggle } from "@/components/Theme/ThemeToggle";
 import styles from "./marketing.module.scss";
@@ -9,6 +10,7 @@ export default function MarketingLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className={styles.page}>
+      <MeshGradient />
       <header className={styles.header}>
         <nav className={styles.nav}>
           <Link href="/" className={styles.brand}>

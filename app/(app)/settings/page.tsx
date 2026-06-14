@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Bell } from "lucide-react";
 
 import { auth } from "@/auth";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
 import { ThemeSelect } from "@/components/Theme/ThemeSelect";
 import { prisma } from "@/lib/db/prisma";
 import { formatCompactUsd, shortenAddress } from "@/lib/format";
@@ -137,17 +139,19 @@ function AlertsSection({
     return (
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Alerts</h2>
-        <div className={styles.upsell}>
-          <p className={styles.upsellText}>
-            Get notified by email or Telegram when whales move, prices swing, or
-            a market resolves. Alerts are a Pro feature.
-          </p>
-          <form action={createCheckoutSession}>
-            <button type="submit" className={styles.upsellBtn}>
-              Upgrade to Pro
-            </button>
-          </form>
-        </div>
+        <EmptyState
+          variant="pro"
+          icon={Bell}
+          title="Never miss a whale move"
+          description="Get notified by email or Telegram when whales move, prices swing, or a market resolves. Alerts are a Pro feature."
+          action={
+            <form action={createCheckoutSession}>
+              <button type="submit" className={styles.upsellBtn}>
+                Upgrade to Pro
+              </button>
+            </form>
+          }
+        />
       </section>
     );
   }
@@ -157,7 +161,11 @@ function AlertsSection({
       <h2 className={styles.sectionTitle}>Alerts</h2>
 
       {alerts.length === 0 ? (
-        <p className={styles.note}>No alerts yet — create one below.</p>
+        <EmptyState
+          icon={Bell}
+          title="No alerts yet"
+          description="Create your first alert below to get notified when whales move or prices swing."
+        />
       ) : (
         <ul className={styles.alertList}>
           {alerts.map((a) => (

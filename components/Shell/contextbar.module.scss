@@ -1,0 +1,61 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  /* bleed to the content column edges (matches .main fluid padding) */
+  margin: -1.75rem calc(var(--gutter) * -1) 1.5rem;
+  padding: 1.1rem var(--gutter);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--subtle);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-tight);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .bar {
+    position: static;
+    margin: -1.25rem calc(var(--gutter) * -1) 1.25rem;
+    padding: 1rem var(--gutter);
+  }
+}

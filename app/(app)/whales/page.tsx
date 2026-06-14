@@ -1,15 +1,19 @@
 import Link from "next/link";
+import { Crown } from "lucide-react";
 
+import { ContextBar } from "@/components/Shell/ContextBar";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { StatCard } from "@/components/data/StatCard";
+import { StatStrip } from "@/components/data/StatStrip";
+import { Leaderboard, type LeaderRow } from "@/components/Leaderboard/Leaderboard";
+import { SmartMoneyPanel } from "@/components/Leaderboard/SmartMoneyPanel";
+import { WhaleTicker } from "@/components/marketing/WhaleTicker";
+import { Reveal } from "@/components/motion/Reveal";
 import { TradesTable } from "@/components/TradesTable/TradesTable";
 import type { TradeRow } from "@/components/TradesTable/TradesTable";
 import { prisma } from "@/lib/db/prisma";
-import {
-  formatCompactUsd,
-  formatPercent,
-  formatRelativeTime,
-  shortenAddress,
-} from "@/lib/format";
 import { PLAN_LIMITS } from "@/lib/plan";
+import { getPlatformStatCards } from "@/lib/stats";
 import { getCurrentPlan } from "@/lib/subscription";
 import styles from "./whales.module.scss";
 
@@ -17,11 +21,12 @@ import styles from "./whales.module.scss";
 export const dynamic = "force-dynamic";
 
 const RANKING_LIMIT = 20;
+const DAY = 24 * 60 * 60 * 1000;
 const PERIODS = { "24h": "24h", "7d": "7d" } as const;
 type Period = keyof typeof PERIODS;
 const PERIOD_MS: Record<Period, number> = {
-  "24h": 24 * 60 * 60 * 1000,
-  "7d": 7 * 24 * 60 * 60 * 1000,
+  "24h": DAY,
+  "7d": 7 * DAY,
 };
 
 function buildHref(params: { period?: Period; category?: string }): string {
@@ -46,7 +51,7 @@ export default async function WhalesPage({
   const plan = await getCurrentPlan();
   const limits = PLAN_LIMITS[plan];
 
-  const [feed, ranking, categoryRows] = await Promise.all([
+  const [feed, ranking, categoryRows, statCards] = await Promise.all([
     prisma.trade.findMany({
       where: {
         isWhale: true,
@@ -76,7 +81,42 @@ export default async function WhalesPage({
       distinct: ["category"],
       orderBy: { category: "asc" },
     }),
+    getPlatformStatCards(),
   ]);
+
+  // Per-wallet 24h-vs-7d volume → recent-activity share for the leaderboard.
+  let leaderRows: LeaderRow[] = [];
+  if (limits.whaleRanking && ranking.length) {
+    const addrs = ranking.map((w) => w.address);
+    const now = Date.now();
+    const [v24, v7] = await Promise.all([
+      prisma.trade.groupBy({
+        by: ["wallet"],
+        where: { isWhale: true, wallet: { in: addrs }, ts: { gte: new Date(now - DAY) } },
+        _sum: { sizeUsdc: true },
+      }),
+      prisma.trade.groupBy({
+        by: ["wallet"],
+        where: { isWhale: true, wallet: { in: addrs }, ts: { gte: new Date(now - 7 * DAY) } },
+        _sum: { sizeUsdc: true },
+      }),
+    ]);
+    const m24 = new Map(v24.map((r) => [r.wallet, Number(r._sum.sizeUsdc ?? 0)]));
+    const m7 = new Map(v7.map((r) => [r.wallet, Number(r._sum.sizeUsdc ?? 0)]));
+    leaderRows = ranking.map((w, i) => {
+      const s7 = m7.get(w.address) ?? 0;
+      const s24 = m24.get(w.address) ?? 0;
+      return {
+        rank: i + 1,
+        address: w.address,
+        totalVolume: w.totalVolumeUsdc,
+        volShare24h: s7 > 0 ? s24 / s7 : null,
+        realizedPnl: w.realizedPnl,
+        winRate: w.winRate,
+        lastActive: w.lastActive,
+      };
+    });
+  }
 
   const trades: TradeRow[] = feed.map((t) => ({
     id: t.id,
@@ -93,53 +133,59 @@ export default async function WhalesPage({
     .map((r) => r.category)
     .filter((c): c is string => Boolean(c));
 
-  return (
-    <section className={styles.page}>
-      <header className={styles.head}>
-        <h1 className={styles.title}>Whale moves</h1>
-        <p className={styles.subtitle}>
-          The largest taker trades across tracked markets. Information only, not
-          financial advice.
-        </p>
-      </header>
+  const controls = (
+    <div className={styles.controls}>
+      <div className={styles.group}>
+        <span className={styles.controlLabel}>Period</span>
+        {(Object.keys(PERIODS) as Period[]).map((key) => (
+          <Link
+            key={key}
+            href={buildHref({ period: key, category })}
+            className={key === period ? styles.chipActive : styles.chip}
+          >
+            {key}
+          </Link>
+        ))}
+      </div>
 
-      <div className={styles.controls}>
+      {categories.length > 0 ? (
         <div className={styles.group}>
-          <span className={styles.controlLabel}>Period</span>
-          {(Object.keys(PERIODS) as Period[]).map((key) => (
+          <span className={styles.controlLabel}>Category</span>
+          <Link
+            href={buildHref({ period })}
+            className={!category ? styles.chipActive : styles.chip}
+          >
+            All
+          </Link>
+          {categories.map((cat) => (
             <Link
-              key={key}
-              href={buildHref({ period: key, category })}
-              className={key === period ? styles.chipActive : styles.chip}
+              key={cat}
+              href={buildHref({ period, category: cat })}
+              className={cat === category ? styles.chipActive : styles.chip}
             >
-              {key === "24h" ? "24h" : "7d"}
+              {cat}
             </Link>
           ))}
         </div>
+      ) : null}
+    </div>
+  );
 
-        {categories.length > 0 ? (
-          <div className={styles.group}>
-            <span className={styles.controlLabel}>Category</span>
-            <Link
-              href={buildHref({ period })}
-              className={!category ? styles.chipActive : styles.chip}
-            >
-              All
-            </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat}
-                href={buildHref({ period, category: cat })}
-                className={cat === category ? styles.chipActive : styles.chip}
-              >
-                {cat}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-      </div>
+  return (
+    <section className={styles.page}>
+      <ContextBar eyebrow="Smart money" title="Whale moves">
+        {controls}
+      </ContextBar>
 
-      <section className={styles.section}>
+      <WhaleTicker trades={trades} />
+
+      <StatStrip>
+        {statCards.map((c, i) => (
+          <StatCard key={i} {...c} />
+        ))}
+      </StatStrip>
+
+      <Reveal whenInView className={styles.section}>
         <h2 className={styles.sectionTitle}>Top trades</h2>
         <TradesTable
           trades={trades}
@@ -155,64 +201,40 @@ export default async function WhalesPage({
             for the full feed.
           </p>
         ) : null}
-      </section>
+      </Reveal>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Top whales by volume</h2>
-        {!limits.whaleRanking ? (
-          <div className={styles.upsell}>
-            <p className={styles.upsellText}>
-              The whale leaderboard — ranked by volume, estimated P&amp;L and win
-              rate — is a Pro feature.
+      {limits.whaleRanking && ranking.length > 0 ? (
+        <Reveal whenInView>
+          <SmartMoneyPanel
+            title="Smart-money leaderboard"
+            subtitle="The wallets moving the most size — ranked by traded volume, with estimated P&L and win rate from ingested whale trades."
+          >
+            <Leaderboard rows={leaderRows} internalLinks />
+            <p className={styles.note}>
+              Est. P&amp;L and win rate are FIFO estimates from ingested whale
+              trades, not a full ledger.
             </p>
+          </SmartMoneyPanel>
+        </Reveal>
+      ) : !limits.whaleRanking ? (
+        <EmptyState
+          variant="pro"
+          icon={Crown}
+          title="Unlock the smart-money leaderboard"
+          description="Rank every whale by volume, estimated P&L and win rate — and open any wallet's full trade history. A Pro feature."
+          action={
             <Link href="/settings" className={styles.upsellLink}>
               Upgrade to Pro
             </Link>
-          </div>
-        ) : ranking.length === 0 ? (
-          <p className={styles.empty}>
-            No whale wallets yet — run the aggregate-whales cron.
-          </p>
-        ) : (
-          <ol className={styles.ranking}>
-            {ranking.map((w, i) => (
-              <li key={w.address} className={styles.rankRow}>
-                <span className={styles.rank}>{i + 1}</span>
-                <a
-                  className={styles.rankWallet}
-                  href={`https://polymarket.com/profile/${w.address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {shortenAddress(w.address)}
-                </a>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Volume</span>
-                  {formatCompactUsd(w.totalVolumeUsdc)}
-                </span>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Est. P&L</span>
-                  {formatCompactUsd(w.realizedPnl)}
-                </span>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Win rate</span>
-                  {formatPercent(w.winRate)}
-                </span>
-                <span className={styles.rankStat}>
-                  <span className={styles.rankLabel}>Active</span>
-                  {w.lastActive ? formatRelativeTime(w.lastActive) : "—"}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-        {limits.whaleRanking ? (
-          <p className={styles.note}>
-            Est. P&amp;L and win rate are FIFO estimates from ingested whale
-            trades, not a full ledger.
-          </p>
-        ) : null}
-      </section>
+          }
+        />
+      ) : (
+        <EmptyState
+          icon={Crown}
+          title="No ranked whales yet"
+          description="The leaderboard fills in once the aggregate-whales job has run."
+        />
+      )}
     </section>
   );
 }
