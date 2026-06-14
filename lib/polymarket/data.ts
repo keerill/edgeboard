@@ -46,11 +46,15 @@ export async function getWhaleTrades(
 const POSITIONS_LIMIT = 500;
 
 /**
- * Current positions for a public wallet (spec §5.3, §8 dashboard). One row per
- * outcome held, sorted by current value desc. Returns [] on failure so the
- * dashboard degrades gracefully, mirroring getWhaleTrades. TTL ~60s (§5.3).
+ * Current positions for a public wallet (spec §5.3, §8 dashboard), with an `ok`
+ * flag so callers can tell a genuine "no positions" from a Data API outage.
+ * `ok=false` means the request failed (network/5xx) — the dashboard renders a
+ * distinct "live data unavailable" state instead of an empty portfolio. One row
+ * per outcome held, sorted by current value desc. TTL ~60s (§5.3).
  */
-export async function getPositions(address: string): Promise<DataPosition[]> {
+export async function getPositionsResult(
+  address: string,
+): Promise<{ positions: DataPosition[]; ok: boolean }> {
   const params = new URLSearchParams({
     user: address,
     sortBy: "CURRENT",
@@ -62,10 +66,15 @@ export async function getPositions(address: string): Promise<DataPosition[]> {
       `${DATA_API_BASE}/positions?${params.toString()}`,
       { cacheTtlMs: 60_000 },
     );
-    return Array.isArray(positions) ? positions : [];
+    return { positions: Array.isArray(positions) ? positions : [], ok: true };
   } catch {
-    return [];
+    return { positions: [], ok: false };
   }
+}
+
+/** Positions only (back-compat). Returns [] on failure — see getPositionsResult. */
+export async function getPositions(address: string): Promise<DataPosition[]> {
+  return (await getPositionsResult(address)).positions;
 }
 
 /**

@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { Wallet } from "lucide-react";
+import { CloudOff, Wallet } from "lucide-react";
 
 import { auth } from "@/auth";
 import { ContextBar } from "@/components/Shell/ContextBar";
 import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { FilterPills } from "@/components/Filters/FilterPills";
+import { FilterProvider } from "@/components/Filters/FilterProvider";
+import { PendingRegion } from "@/components/Filters/PendingRegion";
+import { SubmitButton } from "@/components/SubmitButton/SubmitButton";
 import { Donut } from "@/components/data/Donut";
 import { StatCard } from "@/components/data/StatCard";
 import { StatStrip } from "@/components/data/StatStrip";
@@ -16,7 +20,7 @@ import { summarizePortfolio } from "@/lib/analytics/portfolio";
 import { prisma } from "@/lib/db/prisma";
 import { shortenAddress } from "@/lib/format";
 import { canAddWallet } from "@/lib/plan";
-import { getPortfolioValue, getPositions } from "@/lib/polymarket";
+import { getPortfolioValue, getPositionsResult } from "@/lib/polymarket";
 import { getPlatformStatCards } from "@/lib/stats";
 import { getUserSubscription } from "@/lib/subscription";
 import { addTrackedWallet, removeTrackedWallet } from "./actions";
@@ -52,9 +56,9 @@ function AddWalletForm({ invalid }: { invalid: boolean }) {
         autoComplete="off"
         aria-label="Wallet label"
       />
-      <button className={styles.addBtn} type="submit">
+      <SubmitButton className={styles.addBtn} pendingText="Adding…">
         Add wallet
-      </button>
+      </SubmitButton>
       {invalid ? (
         <p className={styles.error}>
           Enter a valid address: 0x followed by 40 hex characters.
@@ -135,10 +139,14 @@ export default async function DashboardPage({
   const selected =
     wallets.find((w) => w.address === requested) ?? wallets[0];
 
-  const [positions, value] = await Promise.all([
-    getPositions(selected.address),
+  const [positionsResult, value] = await Promise.all([
+    getPositionsResult(selected.address),
     getPortfolioValue(selected.address),
   ]);
+  const positions = positionsResult.positions;
+  // Distinguish a genuine "no positions" from a Data API outage so we can show
+  // a distinct state instead of an empty portfolio.
+  const dataApiDown = !positionsResult.ok;
 
   const summary = summarizePortfolio(
     positions.map((p) => ({
@@ -196,85 +204,101 @@ export default async function DashboardPage({
 
   const walletBar = (
     <div className={styles.walletBar}>
-      <div className={styles.chips}>
-        {wallets.map((w) => (
-          <Link
-            key={w.id}
-            href={`/dashboard?wallet=${w.address}`}
-            className={w.id === selected.id ? styles.chipActive : styles.chip}
-          >
-            {w.label ?? shortenAddress(w.address)}
-          </Link>
-        ))}
-      </div>
+      <FilterPills
+        param="wallet"
+        mono
+        ariaLabel="Select tracked wallet"
+        active={selected.address}
+        defaultValue={wallets[0].address}
+        options={wallets.map((w) => ({
+          value: w.address,
+          label: w.label ?? shortenAddress(w.address),
+        }))}
+      />
       <form action={removeTrackedWallet}>
         <input type="hidden" name="id" value={selected.id} />
-        <button type="submit" className={styles.removeBtn}>
+        <SubmitButton className={styles.removeBtn} pendingText="Removing…">
           Remove
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );
 
   return (
-    <section className={styles.page}>
-      <ContextBar eyebrow="Smart money" title="Portfolio">
-        {walletBar}
-      </ContextBar>
+    <FilterProvider>
+      <section className={styles.page}>
+        <ContextBar eyebrow="Smart money" title="Portfolio">
+          {walletBar}
+        </ContextBar>
 
-      {statStrip}
+        {statStrip}
 
-      <p className={styles.viewing}>
-        Viewing{" "}
-        <a
-          className={styles.address}
-          href={`https://polymarket.com/profile/${selected.address}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {shortenAddress(selected.address)}
-        </a>
-      </p>
+        <p className={styles.viewing}>
+          Viewing{" "}
+          <a
+            className={styles.address}
+            href={`https://polymarket.com/profile/${selected.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {shortenAddress(selected.address)}
+          </a>
+        </p>
 
-      <PortfolioSummary
-        totalValue={totalValue}
-        totalCashPnl={summary.totalCashPnl}
-        totalPercentPnl={summary.totalPercentPnl}
-        winRate={summary.winRate}
-        openPositions={summary.openPositions}
-      />
-
-      <div className="withRail">
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Positions</h2>
-          <PositionsTable
-            positions={rows}
-            emptyMessage="No open positions for this address (or the Data API is unavailable right now)."
+        <PendingRegion>
+          <PortfolioSummary
+            totalValue={totalValue}
+            totalCashPnl={summary.totalCashPnl}
+            totalPercentPnl={summary.totalPercentPnl}
+            winRate={summary.winRate}
+            openPositions={summary.openPositions}
           />
-          <p className={styles.note}>
-            Value and P&amp;L are sourced from the Polymarket Data API. Win rate
-            is the share of positions currently in profit.
-          </p>
-        </section>
+        </PendingRegion>
 
-        <aside className="rail">
-          {composition.length > 0 ? (
-            <div className={styles.panel}>
-              <h2 className={styles.sectionTitle}>Allocation</h2>
-              <Donut data={composition} />
-            </div>
-          ) : null}
+        <PendingRegion>
+          <div className="withRail">
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Positions</h2>
+              {dataApiDown ? (
+                <EmptyState
+                  icon={CloudOff}
+                  title="Live data unavailable"
+                  description="We couldn't reach the Polymarket Data API just now. Your tracked wallets are saved — refresh in a moment to see positions and P&L."
+                />
+              ) : (
+                <>
+                  <PositionsTable
+                    positions={rows}
+                    emptyMessage="No open positions for this address."
+                  />
+                  <p className={styles.note}>
+                    Value and P&amp;L are sourced from the Polymarket Data API.
+                    Win rate is the share of positions currently in profit.
+                  </p>
+                </>
+              )}
+            </section>
 
-          {canAdd ? (
-            <div className={styles.panel}>
-              <h2 className={styles.sectionTitle}>Add a wallet</h2>
-              <AddWalletForm invalid={invalid} />
-            </div>
-          ) : (
-            <WalletLimitNotice atLimitError={limitError} />
-          )}
-        </aside>
-      </div>
-    </section>
+            <aside className="rail">
+              {composition.length > 0 ? (
+                <div className={styles.panel}>
+                  <h2 className={styles.sectionTitle}>Allocation</h2>
+                  <Donut data={composition} />
+                </div>
+              ) : null}
+
+              {canAdd ? (
+                <div className={styles.panel}>
+                  <h2 className={styles.sectionTitle}>Add a wallet</h2>
+                  <AddWalletForm invalid={invalid} />
+                </div>
+              ) : (
+                <WalletLimitNotice atLimitError={limitError} />
+              )}
+            </aside>
+          </div>
+        </PendingRegion>
+      </section>
+    </FilterProvider>
   );
 }

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 
 import { auth } from "@/auth";
+import { AlertList } from "@/components/Alerts/AlertList";
 import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { SubmitButton } from "@/components/SubmitButton/SubmitButton";
 import { ThemeSelect } from "@/components/Theme/ThemeSelect";
 import { prisma } from "@/lib/db/prisma";
 import { formatCompactUsd, shortenAddress } from "@/lib/format";
@@ -146,9 +148,12 @@ function AlertsSection({
           description="Get notified by email or Telegram when whales move, prices swing, or a market resolves. Alerts are a Pro feature."
           action={
             <form action={createCheckoutSession}>
-              <button type="submit" className={styles.upsellBtn}>
+              <SubmitButton
+                className={styles.upsellBtn}
+                pendingText="Redirecting…"
+              >
                 Upgrade to Pro
-              </button>
+              </SubmitButton>
             </form>
           }
         />
@@ -167,39 +172,17 @@ function AlertsSection({
           description="Create your first alert below to get notified when whales move or prices swing."
         />
       ) : (
-        <ul className={styles.alertList}>
-          {alerts.map((a) => (
-            <li key={a.id} className={styles.alertRow}>
-              <div className={styles.alertInfo}>
-                <span className={styles.alertTitle}>
-                  {TYPE_LABELS[a.type] ?? a.type}
-                  {!a.active ? <span className={styles.paused}> · paused</span> : null}
-                </span>
-                <span className={styles.alertDesc}>{describeAlert(a)}</span>
-                <span className={styles.alertMeta}>via {a.channel}</span>
-              </div>
-              <div className={styles.alertActions}>
-                <form action={toggleAlert}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <input
-                    type="hidden"
-                    name="active"
-                    value={a.active ? "false" : "true"}
-                  />
-                  <button type="submit" className={styles.smallBtn}>
-                    {a.active ? "Pause" : "Resume"}
-                  </button>
-                </form>
-                <form action={removeAlert}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <button type="submit" className={styles.smallBtn}>
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <AlertList
+          items={alerts.map((a) => ({
+            id: a.id,
+            typeLabel: TYPE_LABELS[a.type] ?? a.type,
+            description: describeAlert(a),
+            channel: a.channel,
+            active: a.active,
+          }))}
+          toggleAction={toggleAlert}
+          removeAction={removeAlert}
+        />
       )}
 
       <form action={addAlert} className={styles.alertForm}>
@@ -252,9 +235,9 @@ function AlertsSection({
               placeholder="0x…"
             />
           </label>
-          <button type="submit" className={styles.addBtn}>
+          <SubmitButton className={styles.addBtn} pendingText="Creating…">
             Create alert
-          </button>
+          </SubmitButton>
         </div>
         <p className={styles.note}>
           Whale move: optional market, wallet, and min USD. Price swing: pick a
@@ -274,9 +257,9 @@ function AlertsSection({
             placeholder="e.g. 123456789"
           />
         </label>
-        <button type="submit" className={styles.smallBtn}>
+        <SubmitButton className={styles.smallBtn} pendingText="Saving…">
           Save
-        </button>
+        </SubmitButton>
         <p className={styles.note}>
           Message your Telegram bot, then get your numeric chat ID (e.g. via{" "}
           <span className={styles.code}>@userinfobot</span>). Leave empty to clear.
@@ -357,15 +340,21 @@ export default async function SettingsPage({
 
           {isPro ? (
             <form action={createBillingPortalSession}>
-              <button type="submit" className={styles.manageBtn}>
+              <SubmitButton
+                className={styles.manageBtn}
+                pendingText="Opening portal…"
+              >
                 Manage subscription
-              </button>
+              </SubmitButton>
             </form>
           ) : (
             <form action={createCheckoutSession}>
-              <button type="submit" className={styles.upgradeBtn}>
+              <SubmitButton
+                className={styles.upgradeBtn}
+                pendingText="Redirecting to checkout…"
+              >
                 Upgrade to Pro — {PRO_PRICE_LABEL}
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>

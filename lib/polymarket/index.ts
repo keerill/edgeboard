@@ -3,7 +3,12 @@
 // Phase 4: Data API positions/value (portfolio).
 export { getActiveMarkets } from "./gamma";
 export { getMidpoint } from "./clob";
-export { getWhaleTrades, getPositions, getPortfolioValue } from "./data";
+export {
+  getWhaleTrades,
+  getPositions,
+  getPositionsResult,
+  getPortfolioValue,
+} from "./data";
 export { fetchJson } from "./http";
 export { parseJsonArray } from "./types";
 export type {

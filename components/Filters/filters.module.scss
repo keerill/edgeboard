@@ -1,0 +1,145 @@
+/* ── Filter pill groups (shared by whales + markets + dashboard) ───────────
+   Lifted verbatim from the old whales/markets modules, plus the button resets
+   the controls need now that pills are <button> instead of <a>. */
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controlLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.chip,
+.chipActive {
+  padding: 0.3rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.chip {
+  background: transparent;
+  color: var(--muted);
+
+  &:hover {
+    color: var(--foreground);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+}
+
+.chipActive {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.chip:focus-visible,
+.chipActive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* ── Pending region (scrim + overlay spinner during a filter transition) ───
+   A ::after scrim dims the data region without wrapping its children, so flex
+   gaps / grid layout inside the region are preserved. The scrim is always
+   present at opacity 0 so it can fade; while pending it also captures pointer
+   events to block interaction with the stale content. */
+.region {
+  position: relative;
+}
+
+.region::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.region[data-pending]::after {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+/* ── Search form (markets) ─────────────────────────────────────────────── */
+.search {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.65rem;
+  color: var(--subtle);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 16rem;
+  max-width: 60vw;
+  padding: 0.5rem 0.75rem 0.5rem 2.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--foreground);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
+}
+
+.searchBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--foreground);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+}
